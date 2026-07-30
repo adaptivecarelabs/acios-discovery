@@ -21,5 +21,7 @@ class FinelibParser(BaseDirectoryParser):
 
         return list(cards)
 
+    
+
     def parse(self, html: str) -> list[RawDiscovery]:
         raise NotImplementedError
