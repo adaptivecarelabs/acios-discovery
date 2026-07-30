@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from acios_discovery.domain.entities.company import Company
+from acios_discovery.domain.company.models import Company
 
 
 def test_company_creation() -> None:
