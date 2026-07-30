@@ -1,26 +1,15 @@
-from pathlib import Path
-
-import pytest
-
-from acios_discovery.infrastructure.parser.finelib.parser import FinelibParser
-
-FIXTURE = (
-    Path(__file__)
-    .parents[2]
-    / "fixtures"
-    / "finelib"
-    / "lagos_healthcare_services.html"
+from acios_discovery.infrastructure.connectors.finelib.parser import (
+    FinelibParser,
 )
 
 
-def test_fixture_exists() -> None:
-    assert FIXTURE.exists()
-
-
-def test_parser_not_implemented() -> None:
-    html = FIXTURE.read_text(encoding="utf-8")
-
+def test_find_business_cards(
+    finelib_health_fixture: str,
+) -> None:
     parser = FinelibParser()
 
-    with pytest.raises(NotImplementedError):
-        parser.parse(html)
+    cards = parser.find_business_cards(
+        finelib_health_fixture,
+    )
+
+    assert len(cards) > 0
