@@ -1,3 +1,4 @@
+from .contact import BusinessContact
 from .context import DiscoveryContext
 from .identity import BusinessIdentity
 from .models import RawDiscovery
@@ -10,5 +11,6 @@ __all__ = [
     "RawDiscovery",
     "BusinessIdentity",
     "BusinessRegistration",
+    "BusinessContact",
 ]
 
