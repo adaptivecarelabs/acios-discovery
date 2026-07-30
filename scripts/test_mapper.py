@@ -1,11 +1,11 @@
+from pathlib import Path
+
 from acios_discovery.infrastructure.connectors.finelib.mapper import (
     FinelibMapper,
 )
 from acios_discovery.infrastructure.connectors.finelib.parser import (
     FinelibParser,
 )
-from pathlib import Path
-
 
 fixture = (
     Path(__file__).parent.parent
