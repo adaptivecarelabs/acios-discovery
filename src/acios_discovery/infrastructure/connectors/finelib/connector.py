@@ -1,5 +1,8 @@
 
-from acios_discovery.domain.connectors import BaseConnector
+from acios_discovery.domain.connectors.base import (
+    BaseConnector,
+)
+from acios_discovery.domain.crawling.job import CrawlJob
 from acios_discovery.domain.discovery import (
     DiscoveryContext,
     DiscoveryRecord,
@@ -8,8 +11,8 @@ from acios_discovery.domain.discovery import (
 from acios_discovery.domain.sources import Source
 from acios_discovery.domain.taxonomy import FINELIB_CATEGORY_MAP
 
-from .mapper import FinelibMapper
-from .parser import FinelibParser
+from .listing_mapper import FinelibMapper
+from .listing_parser import FinelibParser
 
 
 class FinelibConnector(BaseConnector):
@@ -29,9 +32,19 @@ class FinelibConnector(BaseConnector):
         self._parser = parser
         self._mapper = mapper
 
-    async def crawl(self) -> list[DiscoveryRecord]:
-        raise NotImplementedError(
-            "Use crawl_listing() instead."
+    async def crawl(
+        self,
+        job: CrawlJob,
+    ) -> list[DiscoveryRecord]:
+
+        html = ...
+
+        return await self.crawl_listing(
+            html=html,
+            listing_url=job.listing_url,
+            state=job.state,
+            city=job.city,
+            category_slug=job.category_slug,
         )
 
     async def crawl_listing(
@@ -96,3 +109,4 @@ class FinelibConnector(BaseConnector):
             )
 
         return discoveries
+

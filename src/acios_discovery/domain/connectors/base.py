@@ -1,21 +1,16 @@
 from abc import ABC, abstractmethod
 
-from acios_discovery.domain.discovery import (
-    DiscoveryRecord,
-)
+from acios_discovery.domain.crawling.job import CrawlJob
+from acios_discovery.domain.discovery.record import DiscoveryRecord
 
 
 class BaseConnector(ABC):
-    """
-    Every external data source must implement
-    this interface.
-    """
 
     @abstractmethod
     async def crawl(
         self,
+        job: CrawlJob,
     ) -> list[DiscoveryRecord]:
         """
-        Crawl one source and return
-        discovery records.
+        Execute one crawl job.
         """

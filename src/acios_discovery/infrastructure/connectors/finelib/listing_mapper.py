@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from bs4 import Tag
 
+from acios_discovery.domain.discovery.discovery import Discovery
 from acios_discovery.domain.discovery.models import RawDiscovery
 from acios_discovery.infrastructure.connectors.html import (
     extract_link,
@@ -164,3 +165,17 @@ class FinelibMapper:
         card,
     ) -> list[str]:
         return []
+
+
+    def to_discovery(
+        self,
+        card: Tag,
+    ) -> Discovery:
+
+        return Discovery(
+            business_name=self.extract_business_name(card),
+            detail_url=self.extract_detail_url(card),
+            address=self.extract_address(card),
+            description=self.extract_description(card),
+            phone_numbers=self.extract_phone_numbers(card),
+        )
