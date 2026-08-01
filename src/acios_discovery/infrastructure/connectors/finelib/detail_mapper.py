@@ -1,7 +1,5 @@
 from bs4 import BeautifulSoup, Tag
 
-from acios_discovery.domain.discovery.discovery import Discovery
-
 
 class FinelibDetailMapper:
 
@@ -43,27 +41,46 @@ class FinelibDetailMapper:
     def extract_email(
         self,
         soup: BeautifulSoup,
-    ) -> str |None:
+    ) -> str | None:
+
+        #
+        # Standard mailto links
+        #
 
         link = soup.find(
             "a",
-            href=lambda href: href and href.startswith(
-                "mailto:"
+            href=lambda href: (
+                href is not None
+                and href.startswith("mailto:")
             ),
         )
 
-        if link is None:
-            return None
+        if isinstance(link, Tag):
 
-        href = link["href"]
+            href = link.get("href")
 
-        return (
-            href.replace(
-                "mailto:",
-                "",
+            if not isinstance(href, str):
+                return None
+
+            return (
+                href.replace("mailto:", "")
+                .strip()
             )
-            .strip()
-        )
+
+        #
+        # Cloudflare Email Protection
+        #
+
+        for link in soup.find_all("a"):
+
+            text = link.get_text(
+                strip=True,
+            )
+
+            if "@" in text:
+                return text
+
+        return None
 
 
     def extract_website(
@@ -87,7 +104,12 @@ class FinelibDetailMapper:
         if link is None:
             return None
 
-        return link["href"].strip()
+        href = link.get("href")
+
+        if not isinstance(href, str):
+            return None
+
+        return href.strip()
 
 
     def extract_social_links(
@@ -114,19 +136,25 @@ class FinelibDetailMapper:
 
             for link in links:
 
-                href = link["href"].strip().lower()
+                href = link.get("href")
 
-                if "facebook.com" in href:
-                    socials["facebook"] = link["href"].strip()
+                if not isinstance(href, str):
+                    continue
+
+                clean_href = href.strip()
+                lower_href = clean_href.lower()
+
+                if "facebook.com" in lower_href:
+                    socials["facebook"] = clean_href
 
                 elif "twitter.com" in href:
-                    socials["twitter"] = link["href"].strip()
+                    socials["twitter"] = clean_href
 
                 elif "linkedin.com" in href:
-                    socials["linkedin"] = link["href"].strip()
+                    socials["linkedin"] = clean_href
 
                 elif "instagram.com" in href:
-                    socials["instagram"] = link["href"].strip()
+                    socials["instagram"] = clean_href
 
             if socials:
                 return socials
@@ -232,30 +260,3 @@ class FinelibDetailMapper:
             if payment.strip()
         ]
 
-    def enrich(
-        self,
-        discovery: Discovery,
-        soup: BeautifulSoup,
-    ) -> Discovery:
-
-        discovery.email = self.extract_email(soup)
-
-        discovery.website = self.extract_website(soup)
-
-        discovery.social_links = self.extract_social_links(soup)
-
-        discovery.year_founded = self.extract_year_founded(soup)
-
-        discovery.employee_count = self.extract_employee_count(soup)
-
-        discovery.business_locations = (
-            self.extract_business_locations(soup)
-        )
-
-        discovery.product_types = self.extract_product_types(soup)
-
-        discovery.payment_methods = (
-            self.extract_payment_methods(soup)
-        )
-
-        return discovery

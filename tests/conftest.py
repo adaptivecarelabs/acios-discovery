@@ -38,4 +38,21 @@ def finelib_health_fixture() -> str:
         / "lagos_healthcare_services.html"
     )
 
-    return fixture.read_text(encoding="utf-8")
+    return fixture.read_text(
+        encoding="utf-8",
+    )
+
+
+@pytest.fixture
+def finelib_detail_fixture() -> str:
+    fixture = (
+        Path(__file__).parent
+        / "fixtures"
+        / "finelib"
+        / "detail"
+        / "phytoscience_double_stem_cell.html"
+    )
+
+    return fixture.read_text(
+        encoding="utf-8",
+    )

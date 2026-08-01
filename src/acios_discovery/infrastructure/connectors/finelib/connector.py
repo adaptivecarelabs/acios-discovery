@@ -1,4 +1,3 @@
-
 from acios_discovery.domain.connectors.base import (
     BaseConnector,
 )
@@ -17,11 +16,12 @@ from .listing_parser import FinelibParser
 
 class FinelibConnector(BaseConnector):
     """
-    Orchestrates the parsing of a Finelib listing page
-    into DiscoveryRecord objects.
+    Parses a Finelib listing page into DiscoveryRecord objects.
 
-    This connector performs no HTTP requests.
-    HTML is injected by the caller.
+    This connector is responsible ONLY for discovering businesses
+    from listing pages.
+
+    It does NOT enrich businesses from their detail pages.
     """
 
     def __init__(
@@ -29,6 +29,7 @@ class FinelibConnector(BaseConnector):
         parser: FinelibParser,
         mapper: FinelibMapper,
     ) -> None:
+
         self._parser = parser
         self._mapper = mapper
 
@@ -37,14 +38,8 @@ class FinelibConnector(BaseConnector):
         job: CrawlJob,
     ) -> list[DiscoveryRecord]:
 
-        html = ...
-
-        return await self.crawl_listing(
-            html=html,
-            listing_url=job.listing_url,
-            state=job.state,
-            city=job.city,
-            category_slug=job.category_slug,
+        raise NotImplementedError(
+            "The application worker is responsible for downloading listing pages."
         )
 
     async def crawl_listing(
@@ -109,4 +104,3 @@ class FinelibConnector(BaseConnector):
             )
 
         return discoveries
-

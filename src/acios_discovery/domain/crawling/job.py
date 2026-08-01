@@ -2,6 +2,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
+from acios_discovery.domain.sources import Source
+
 from .priority import CrawlPriority
 from .status import CrawlStatus
 
@@ -15,7 +17,7 @@ class CrawlJob(BaseModel):
         default_factory=lambda: str(uuid4())
     )
 
-    source: str
+    source: Source
 
     listing_url: str
 

@@ -13,11 +13,9 @@ from acios_discovery.infrastructure.connectors.finelib.parser import (
 
 
 @pytest.mark.asyncio
-@pytest.mark.asyncio
 async def test_connector_returns_discovery_records(
     finelib_health_fixture: str,
 ) -> None:
-    html = finelib_health_fixture
 
     connector = FinelibConnector(
         parser=FinelibParser(),
@@ -25,7 +23,7 @@ async def test_connector_returns_discovery_records(
     )
 
     records = await connector.crawl_listing(
-        html=html,
+        html=finelib_health_fixture,
         listing_url="https://www.finelib.com/cities/lagos/health",
         state="Lagos",
         city="Lagos",

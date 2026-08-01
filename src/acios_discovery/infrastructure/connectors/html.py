@@ -4,9 +4,7 @@ from bs4 import Tag
 def extract_text(
     parent: Tag,
     selector: str,
-    *,
-    required: bool = True,
-) -> str | None:
+) -> str:
     """
     Extract stripped text from the first matching element.
     """
@@ -14,12 +12,9 @@ def extract_text(
     element = parent.select_one(selector)
 
     if element is None:
-        if required:
-            raise ValueError(
-                f"Selector not found: {selector}"
-            )
-
-        return None
+        raise ValueError(
+            f"Selector not found: {selector}"
+        )
 
     return element.get_text(" ", strip=True)
 
@@ -27,9 +22,7 @@ def extract_text(
 def extract_link(
     parent: Tag,
     selector: str,
-    *,
-    required: bool = True,
-) -> str | None:
+) -> str:
     """
     Extract href from the first matching anchor.
     """
@@ -37,22 +30,16 @@ def extract_link(
     element = parent.select_one(selector)
 
     if element is None:
-        if required:
-            raise ValueError(
-                f"Selector not found: {selector}"
-            )
-
-        return None
+        raise ValueError(
+            f"Selector not found: {selector}"
+        )
 
     href = element.get("href")
 
-    if not href:
-        if required:
-            raise ValueError(
-                f"Empty href for selector: {selector}"
-            )
-
-        return None
+    if not isinstance(href, str) or not href.strip():
+        raise ValueError(
+            f"Empty href for selector: {selector}"
+        )
 
     return href
 
