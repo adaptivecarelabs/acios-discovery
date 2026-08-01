@@ -14,3 +14,12 @@ class BaseConnector(ABC):
         """
         Execute one crawl job.
         """
+
+    @abstractmethod
+    def has_next_page(
+        self,
+        html: str,
+    ) -> bool:
+        """
+        Returns True if another listing page exists.
+        """

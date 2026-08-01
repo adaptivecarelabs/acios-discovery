@@ -52,9 +52,7 @@ class FinelibConnector(BaseConnector):
         category_slug: str,
     ) -> list[DiscoveryRecord]:
 
-        taxonomy = FINELIB_CATEGORY_MAP[
-            category_slug
-        ]
+        taxonomy = FINELIB_CATEGORY_MAP[category_slug]
 
         cards = self._parser.find_business_cards(
             html,
@@ -104,3 +102,28 @@ class FinelibConnector(BaseConnector):
             )
 
         return discoveries
+
+
+    def has_next_page(
+        self,
+        html: str,
+    ) -> bool:
+
+        return self._parser.has_next_page(
+            html,
+        )
+
+
+    def next_page_url(
+        self,
+        html: str,
+    ) -> str | None:
+        """
+        Returns the next listing page URL.
+
+        Returns None when the current page is the last page.
+        """
+
+        return self._parser.next_page_url(
+            html,
+        )

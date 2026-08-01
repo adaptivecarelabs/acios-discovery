@@ -56,3 +56,29 @@ def finelib_detail_fixture() -> str:
     return fixture.read_text(
         encoding="utf-8",
     )
+
+
+def load_fixture(path: str) -> str:
+    return (
+        Path(path)
+        .read_text(
+            encoding="utf-8",
+        )
+    )
+
+
+@pytest.fixture
+def lagos_agriculture_service_page1() -> str:
+    return load_fixture(
+        "tests/fixtures/finelib/pagination/"
+        "lagos_agriculture_service_page1.html"
+    )
+
+
+@pytest.fixture
+def lagos_agriculture_service_page2() -> str:
+    return load_fixture(
+        "tests/fixtures/finelib/pagination/"
+        "lagos_agriculture_service_page2.html"
+    )
+

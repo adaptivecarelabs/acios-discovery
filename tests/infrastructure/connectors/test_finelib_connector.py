@@ -27,7 +27,7 @@ async def test_connector_returns_discovery_records(
         listing_url="https://www.finelib.com/cities/lagos/health",
         state="Lagos",
         city="Lagos",
-        category_slug="health",
+        category_slug="healthcare",
     )
 
     assert len(records) == 23
@@ -60,7 +60,7 @@ async def test_connector_returns_discovery_records(
 
     assert (
         first.context.category
-        == "Health Services"
+        == "Healthcare"
     )
 
     assert (

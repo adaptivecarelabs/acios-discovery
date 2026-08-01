@@ -1,3 +1,6 @@
+
+from dataclasses import replace
+
 import pytest
 
 from acios_discovery.application.discovery.service import (
@@ -12,14 +15,44 @@ from tests.fakes.test_html_client import FakeHttpClient
 
 class FakeConnector:
 
-    def __init__(self, records):
-        self.records = records
+    def __init__(
+        self,
+        records=None,
+        *,
+        pages=None,
+        next_pages=None,
+    ):
+        self.records = records or []
+        self.pages = pages or {}
+        self.next_pages = next_pages or {}
+        self.calls: list[str] = []
 
     async def crawl_listing(
         self,
+        *,
+        listing_url: str,
         **kwargs,
     ):
+        self.calls.append(
+            listing_url,
+        )
+
+        if self.pages:
+            return self.pages.get(
+                listing_url,
+                [],
+            )
+
         return self.records
+
+    def next_page_url(
+        self,
+        html: str,
+    ) -> str | None:
+
+        return self.next_pages.get(
+            html,
+        )
 
 
 class FakeEnricher:
@@ -43,7 +76,7 @@ async def test_service_saves_new_records(
     repository = InMemoryDiscoveryRepository()
 
     connector = FakeConnector(
-        [sample_discovery_record],
+        records=[sample_discovery_record],
     )
 
     enricher = FakeEnricher()
@@ -90,7 +123,7 @@ async def test_service_skips_duplicates(
     )
 
     connector = FakeConnector(
-        [sample_discovery_record],
+        records=[sample_discovery_record],
     )
 
     enricher = FakeEnricher()
@@ -128,7 +161,7 @@ async def test_service_handles_empty_listing():
 
     repository = InMemoryDiscoveryRepository()
 
-    connector = FakeConnector([])
+    connector = FakeConnector()
 
     enricher = FakeEnricher()
 
@@ -158,3 +191,121 @@ async def test_service_handles_empty_listing():
     assert result.duplicates == 0
 
     assert await repository.count() == 0
+
+
+@pytest.mark.asyncio
+async def test_service_crawls_multiple_listing_pages(
+    sample_discovery_record,
+):
+    """
+    Service should continue crawling until
+    next_page_url() returns None.
+    """
+
+    repository = InMemoryDiscoveryRepository()
+
+    page1_record = sample_discovery_record
+    page2_record = sample_discovery_record.model_copy(
+        update={
+            "company": replace(
+                sample_discovery_record.company,
+                business_name="Second Business",
+                detail_url="https://example.com/company-2",
+            )
+        }
+    )
+
+    connector = FakeConnector(
+        pages={
+            "https://example.com/page-1": [
+                page1_record,
+            ],
+            "https://example.com/page-2": [
+                page2_record,
+            ],
+        },
+        next_pages={
+            "<page-1>": "https://example.com/page-2",
+            "<page-2>": None,
+        },
+    )
+
+    service = DiscoveryService(
+        connector=connector,
+        enricher=FakeEnricher(),
+        repository=repository,
+        http=FakeHttpClient(
+            {
+                "https://example.com/page-1": "<page-1>",
+                "https://example.com/page-2": "<page-2>",
+            }
+        ),
+    )
+
+    job = CrawlJob(
+        source="finelib",
+        listing_url="https://example.com/page-1",
+        state="Lagos",
+        city="Lagos",
+        category_slug="health",
+    )
+
+    result = await service.run(job)
+
+    assert result.records_found == 2
+    assert result.records_saved == 2
+    assert result.duplicates == 0
+
+    assert await repository.count() == 2
+
+
+@pytest.mark.asyncio
+async def test_service_does_not_revisit_same_page(
+    sample_discovery_record,
+):
+    """
+    Service should stop if the connector
+    returns a page that has already
+    been crawled.
+    """
+
+    repository = InMemoryDiscoveryRepository()
+
+    connector = FakeConnector(
+        pages={
+            "https://example.com/page-1": [
+                sample_discovery_record,
+            ],
+        },
+        next_pages={
+            "<page-1>": "https://example.com/page-1",
+        },
+    )
+
+    service = DiscoveryService(
+        connector=connector,
+        enricher=FakeEnricher(),
+        repository=repository,
+        http=FakeHttpClient(
+            {
+                "https://example.com/page-1": "<page-1>",
+            }
+        ),
+    )
+
+    job = CrawlJob(
+        source="finelib",
+        listing_url="https://example.com/page-1",
+        state="Lagos",
+        city="Lagos",
+        category_slug="health",
+    )
+
+    result = await service.run(job)
+
+    assert result.records_found == 1
+    assert result.records_saved == 1
+
+    assert connector.calls == [
+        "https://example.com/page-1",
+    ]

@@ -48,42 +48,63 @@ class DiscoveryService:
         job: CrawlJob,
     ) -> DiscoveryRunResult:
 
-        listing_html = await self._http.get(
-            job.listing_url,
-        )
-
-        discoveries = await self._connector.crawl_listing(
-            html=listing_html,
-            listing_url=job.listing_url,
-            state=job.state,
-            city=job.city,
-            category_slug=job.category_slug,
-        )
-
         saved = 0
         duplicates = 0
+        records_found = 0
 
-        for record in discoveries:
+        current_url: str | None = job.listing_url
+        visited_urls: set[str] = set()
 
-            record = await self._enricher.enrich(
-                record,
+        while current_url is not None:
+
+            if current_url in visited_urls:
+                break
+
+            visited_urls.add(current_url)
+
+            listing_html = await self._http.get(
+                current_url,
             )
-        
-            if await self._repository.exists(
-                record,
-            ):
-                duplicates += 1
-                continue
 
-            await self._repository.save(
-                record,
+            discoveries = await self._connector.crawl_listing(
+                html=listing_html,
+                listing_url=current_url,
+                state=job.state,
+                city=job.city,
+                category_slug=job.category_slug,
             )
 
-            saved += 1
+            records_found += len(
+                discoveries,
+            )
+
+            for record in discoveries:
+
+                record = await self._enricher.enrich(
+                    record,
+                )
+
+                if await self._repository.exists(
+                    record,
+                ):
+                    duplicates += 1
+                    continue
+
+                await self._repository.save(
+                    record,
+                )
+
+                saved += 1
+
+            current_url = (
+                self._connector.next_page_url(
+                    listing_html,
+                )
+            )
 
         return DiscoveryRunResult(
             source=job.source,
-            records_found=len(discoveries),
+            records_found=records_found,
             records_saved=saved,
             duplicates=duplicates,
         )

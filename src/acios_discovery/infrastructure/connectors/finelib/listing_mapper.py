@@ -179,3 +179,4 @@ class FinelibMapper:
             description=self.extract_description(card),
             phone_numbers=self.extract_phone_numbers(card),
         )
+

@@ -4,10 +4,8 @@ from acios_discovery.domain.taxonomy import (
 
 
 def test_health_mapping() -> None:
-    taxonomy = FINELIB_CATEGORY_MAP["health"]
+    taxonomy = FINELIB_CATEGORY_MAP["healthcare"]
 
     assert taxonomy.industry == "Healthcare"
-
-    assert taxonomy.sector == "Healthcare Services"
-
-    assert taxonomy.category == "Health Services"
+    assert taxonomy.sector == "Healthcare"
+    assert taxonomy.category == "Healthcare"

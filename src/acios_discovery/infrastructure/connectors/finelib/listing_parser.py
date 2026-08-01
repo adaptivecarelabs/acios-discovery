@@ -25,3 +25,81 @@ class FinelibParser(BaseDirectoryParser):
 
     def parse(self, html: str) -> list[RawDiscovery]:
         raise NotImplementedError
+
+    def has_next_page(
+        self,
+        html: str,
+    ) -> bool:
+
+        soup = BeautifulSoup(
+            html,
+            "html.parser",
+        )
+
+        paging = soup.find(
+            "div",
+            class_="paging-box",
+        )
+
+        if not isinstance(
+            paging,
+            Tag,
+        ):
+            return False
+
+        for link in paging.find_all("a"):
+
+            text = link.get_text(
+                strip=True,
+            )
+
+            if text != "Next":
+                continue
+
+            return link.has_attr(
+                "href",
+            )
+
+        return False
+
+    def next_page_url(
+        self,
+        html: str,
+    ) -> str | None:
+
+        soup = BeautifulSoup(
+            html,
+            "html.parser",
+        )
+
+        paging = soup.find(
+            "div",
+            class_="paging-box",
+        )
+
+        if not isinstance(
+            paging,
+            Tag,
+        ):
+            return None
+
+        for link in paging.find_all("a"):
+
+            text = link.get_text(
+                strip=True,
+            )
+
+            if text != "Next":
+                continue
+
+            href = link.get("href")
+
+            if isinstance(
+                href,
+                str,
+            ):
+                return href
+
+            return None
+
+        return None
