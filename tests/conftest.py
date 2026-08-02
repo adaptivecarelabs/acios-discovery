@@ -82,3 +82,16 @@ def lagos_agriculture_service_page2() -> str:
         "lagos_agriculture_service_page2.html"
     )
 
+@pytest.fixture
+def finelib_food_fixture() -> str:
+    return load_fixture(
+        "tests/fixtures/finelib/"
+        "lagos_food_services.html"
+    )
+
+@pytest.fixture
+def finelib_restaurants_fixture() -> str:
+    return load_fixture(
+        "tests/fixtures/finelib/"
+        "lagos_restaurant_services.html"
+    )

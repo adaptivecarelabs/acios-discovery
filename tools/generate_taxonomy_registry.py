@@ -31,7 +31,10 @@ def load_categories() -> dict[str, str]:
         reader = csv.DictReader(f)
 
         for row in reader:
-            categories[row["business_slug"]] = row["name"]
+            categories[row["business_slug"]] = {
+                "root": row["root"],
+                "name": row["name"],
+        }
 
     return categories
 
@@ -54,9 +57,13 @@ def generate_registry() -> str:
     lines.append("")
     lines.append("FINELIB_CATEGORY_MAP: dict[str, Taxonomy] = {")
 
-    for slug, name in sorted(categories.items()):
+    for slug, data in sorted(categories.items()):
+
+        name = data["name"]
+        root = data["root"]
 
         lines.append(f'    "{slug}": Taxonomy(')
+        lines.append(f'        root="{root}",')
         lines.append(f'        industry="{name}",')
         lines.append(f'        sector="{name}",')
         lines.append(f'        category="{name}",')
@@ -77,12 +84,16 @@ def generate_registry() -> str:
         seen.add(slug)
         parent = categories[row["parent"]]
 
+        parent_name = parent["name"]
+        parent_root = parent["root"]
+
         lines.append(
             f'    "{slug}": Taxonomy('
         )
-        lines.append(f'        industry="{parent}",')
-        lines.append(f'        sector="{parent}",')
-        lines.append(f'        category="{parent}",')
+        lines.append(f'        root="{parent_root}",')
+        lines.append(f'        industry="{parent_name}",')
+        lines.append(f'        sector="{parent_name}",')
+        lines.append(f'        category="{parent_name}",')
         lines.append(f'        subcategory="{row["name"]}",')
         lines.append("    ),")
 

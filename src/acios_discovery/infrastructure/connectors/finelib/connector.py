@@ -87,6 +87,7 @@ class FinelibConnector(BaseConnector):
                 source=Source.FINELIB,
                 state=state,
                 city=city,
+                root=taxonomy.root,
                 industry=taxonomy.industry,
                 sector=taxonomy.sector,
                 category=taxonomy.category,

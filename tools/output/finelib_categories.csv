@@ -1,42 +1,118 @@
-business_slug,name,url
-art-business,Art Business,https://www.finelib.com/business/art-business
-automotive,Automotive,https://www.finelib.com/business/automotive
-beauty-care,Beauty Care,https://www.finelib.com/business/beauty-care
-business-services,Business Services,https://www.finelib.com/business/business-services
-chemical-service,Chemical Service,https://www.finelib.com/business/chemical-service
-cleaning-services,Cleaning Services,https://www.finelib.com/business/cleaning-services
-clothing,Clothing,https://www.finelib.com/business/clothing
-construction,Construction,https://www.finelib.com/business/construction
-electrical-services,Electrical Services,https://www.finelib.com/business/electrical-services
-energy,Energy,https://www.finelib.com/business/energy
-engineering-companies,Engineering Companies,https://www.finelib.com/business/engineering-companies
-entertainment,Entertainment,https://www.finelib.com/business/entertainment
-environmental-services,Environmental Services,https://www.finelib.com/business/environmental-services
-exporters,Exporters,https://www.finelib.com/business/exporters
-finance,Finance,https://www.finelib.com/business/finance
-fire-services,Fire Services,https://www.finelib.com/business/fire-services
-food,Food,https://www.finelib.com/business/food
-furniture-dealers,Furniture Dealers,https://www.finelib.com/business/furniture-dealers
-healthcare,Healthcare,https://www.finelib.com/business/healthcare
-home-and-living,Home and Living,https://www.finelib.com/business/home-and-living
-human-resources,Human Resources,https://www.finelib.com/business/human-resources
-industrial-services,Industrial Services,https://www.finelib.com/business/industrial-services
-manufacturing-industries,Manufacturing Industries,https://www.finelib.com/business/manufacturing-industries
-marketing-companies,Marketing Companies,https://www.finelib.com/business/marketing-companies
-metal-services,Metal Services,https://www.finelib.com/business/metal-services
-mining,Mining,https://www.finelib.com/business/mining
-packaging,Packaging,https://www.finelib.com/business/packaging
-paper-companies,Paper Companies,https://www.finelib.com/business/paper-companies
-parties-and-events,Parties and Events,https://www.finelib.com/business/parties-and-events
-personal-care,Personal Care,https://www.finelib.com/business/personal-care
-personal-development,Personal Development,https://www.finelib.com/business/personal-development
-pets-and-animals,Pets and Animals,https://www.finelib.com/business/pets-and-animals
-printing-and-publishing,Printing and Publishing,https://www.finelib.com/business/printing-and-publishing
-real-estate,Real Estate,https://www.finelib.com/business/real-estate
-retail-services,Retail Services,https://www.finelib.com/business/retail-services
-rubber-products,Rubber Products,https://www.finelib.com/business/rubber-products
-security-services,Security Services,https://www.finelib.com/business/security-services
-telecommunication,Telecommunication,https://www.finelib.com/business/telecommunication
-trading,Trading,https://www.finelib.com/business/trading
-transportation,Transportation,https://www.finelib.com/business/transportation
-wood-and-timber,Wood and Timber,https://www.finelib.com/business/wood-and-timber
+root,business_slug,name,url
+accommodation,guest-house,Guest House,https://www.finelib.com/accommodation/guest-house
+accommodation,hotels,Hotels,https://www.finelib.com/accommodation/hotels
+accommodation,motels,Motels,https://www.finelib.com/accommodation/motels
+agriculture,-agricultural-chemicals,Agricultural Chemicals,https://www.finelib.com/agriculture/-agricultural-chemicals
+agriculture,-agricultural-equipment,Agricultural Equipment,https://www.finelib.com/agriculture/-agricultural-equipment
+agriculture,-agricultural-finance,Agricultural Finance,https://www.finelib.com/agriculture/-agricultural-finance
+agriculture,-agricultural-products,Agricultural Products,https://www.finelib.com/agriculture/-agricultural-products
+agriculture,-agro-feeds,Agro Feeds,https://www.finelib.com/agriculture/-agro-feeds
+agriculture,-flour-mills,Flour Mills,https://www.finelib.com/agriculture/-flour-mills
+agriculture,-livestocks,Livestocks,https://www.finelib.com/agriculture/-livestocks
+agriculture,-vegetable-oils,Vegetable Oils,https://www.finelib.com/agriculture/-vegetable-oils
+agriculture,agribusiness,Agribusiness,https://www.finelib.com/agriculture/agribusiness
+agriculture,agric-co_operatives,Agric Co-operatives,https://www.finelib.com/agriculture/agric-co_operatives
+agriculture,agricultural-commodity,Agricultural Commodity,https://www.finelib.com/agriculture/agricultural-commodity
+agriculture,agricultural-consultants,Agricultural Consultants,https://www.finelib.com/agriculture/agricultural-consultants
+agriculture,agricultural-development,Agricultural Development,https://www.finelib.com/agriculture/agricultural-development
+agriculture,agricultural-extension,Agricultural Extension,https://www.finelib.com/agriculture/agricultural-extension
+agriculture,agricultural-journals,Agricultural Journals,https://www.finelib.com/agriculture/agricultural-journals
+agriculture,agricultural-organisations,Agricultural Organisations,https://www.finelib.com/agriculture/agricultural-organisations
+agriculture,agricultural-promotion-boards,Agricultural Promotion Boards,https://www.finelib.com/agriculture/agricultural-promotion-boards
+agriculture,agricultural-research,Agricultural Research,https://www.finelib.com/agriculture/agricultural-research
+agriculture,agricultural-supplies,Agricultural Supplies,https://www.finelib.com/agriculture/agricultural-supplies
+agriculture,agricultural-technology,Agricultural Technology,https://www.finelib.com/agriculture/agricultural-technology
+agriculture,agricultural-training,Agricultural Training,https://www.finelib.com/agriculture/agricultural-training
+agriculture,agriculture-empowerment,Agriculture Empowerment,https://www.finelib.com/agriculture/agriculture-empowerment
+agriculture,agritourism,Agritourism,https://www.finelib.com/agriculture/agritourism
+agriculture,aquaculture,Aquaculture,https://www.finelib.com/agriculture/aquaculture
+agriculture,crops-and-seeds,Crops and Seeds,https://www.finelib.com/agriculture/crops-and-seeds
+agriculture,farm-equipment,Farm Equipment,https://www.finelib.com/agriculture/farm-equipment
+agriculture,farm-tractors,Farm Tractors,https://www.finelib.com/agriculture/farm-tractors
+agriculture,farms,Farms,https://www.finelib.com/agriculture/farms
+agriculture,fertilizer-services,Fertilizer Services,https://www.finelib.com/agriculture/fertilizer-services
+agriculture,fish-farming,Fish Farming,https://www.finelib.com/agriculture/fish-farming
+agriculture,forestry,Forestry,https://www.finelib.com/agriculture/forestry
+agriculture,horticulture,Horticulture,https://www.finelib.com/agriculture/horticulture
+agriculture,pest-management,Pest Management,https://www.finelib.com/agriculture/pest-management
+agriculture,poultry,Poultry,https://www.finelib.com/agriculture/poultry
+agriculture,rice-milling,Rice Milling,https://www.finelib.com/agriculture/rice-milling
+business,art-business,Art Business,https://www.finelib.com/business/art-business
+business,automotive,Automotive,https://www.finelib.com/business/automotive
+business,beauty-care,Beauty Care,https://www.finelib.com/business/beauty-care
+business,business-services,Business Services,https://www.finelib.com/business/business-services
+business,chemical-service,Chemical Service,https://www.finelib.com/business/chemical-service
+business,cleaning-services,Cleaning Services,https://www.finelib.com/business/cleaning-services
+business,clothing,Clothing,https://www.finelib.com/business/clothing
+business,construction,Construction,https://www.finelib.com/business/construction
+business,electrical-services,Electrical Services,https://www.finelib.com/business/electrical-services
+business,energy,Energy,https://www.finelib.com/business/energy
+business,engineering-companies,Engineering Companies,https://www.finelib.com/business/engineering-companies
+business,entertainment,Entertainment,https://www.finelib.com/business/entertainment
+business,environmental-services,Environmental Services,https://www.finelib.com/business/environmental-services
+business,exporters,Exporters,https://www.finelib.com/business/exporters
+business,finance,Finance,https://www.finelib.com/business/finance
+business,fire-services,Fire Services,https://www.finelib.com/business/fire-services
+business,food,Food,https://www.finelib.com/business/food
+business,furniture-dealers,Furniture Dealers,https://www.finelib.com/business/furniture-dealers
+business,healthcare,Healthcare,https://www.finelib.com/business/healthcare
+business,home-and-living,Home and Living,https://www.finelib.com/business/home-and-living
+business,human-resources,Human Resources,https://www.finelib.com/business/human-resources
+business,industrial-services,Industrial Services,https://www.finelib.com/business/industrial-services
+business,manufacturing-industries,Manufacturing Industries,https://www.finelib.com/business/manufacturing-industries
+business,marketing-companies,Marketing Companies,https://www.finelib.com/business/marketing-companies
+business,metal-services,Metal Services,https://www.finelib.com/business/metal-services
+business,mining,Mining,https://www.finelib.com/business/mining
+business,packaging,Packaging,https://www.finelib.com/business/packaging
+business,page-2,2,https://www.finelib.com/business/page-2
+business,page-2,Next,https://www.finelib.com/business/page-2
+business,paper-companies,Paper Companies,https://www.finelib.com/business/paper-companies
+business,parties-and-events,Parties and Events,https://www.finelib.com/business/parties-and-events
+business,personal-care,Personal Care,https://www.finelib.com/business/personal-care
+business,personal-development,Personal Development,https://www.finelib.com/business/personal-development
+business,pets-and-animals,Pets and Animals,https://www.finelib.com/business/pets-and-animals
+business,printing-and-publishing,Printing and Publishing,https://www.finelib.com/business/printing-and-publishing
+business,real-estate,Real Estate,https://www.finelib.com/business/real-estate
+business,retail-services,Retail Services,https://www.finelib.com/business/retail-services
+business,rubber-products,Rubber Products,https://www.finelib.com/business/rubber-products
+business,security-services,Security Services,https://www.finelib.com/business/security-services
+business,telecommunication,Telecommunication,https://www.finelib.com/business/telecommunication
+business,trading,Trading,https://www.finelib.com/business/trading
+business,transportation,Transportation,https://www.finelib.com/business/transportation
+business,wood-and-timber,Wood and Timber,https://www.finelib.com/business/wood-and-timber
+education,academic-research,Academic Research,https://www.finelib.com/education/academic-research
+education,adult-education,Adult Education,https://www.finelib.com/education/adult-education
+education,bookshops,Bookshops,https://www.finelib.com/education/bookshops
+education,business-schools,Business Schools,https://www.finelib.com/education/business-schools
+education,career-and-vocational,Career and Vocational,https://www.finelib.com/education/career-and-vocational
+education,day-care-centers,Day Care Centers,https://www.finelib.com/education/day-care-centers
+education,disability-schools,Disability Schools,https://www.finelib.com/education/disability-schools
+education,education-journals,Education Journals,https://www.finelib.com/education/education-journals
+education,education-management,Education Management,https://www.finelib.com/education/education-management
+education,education-materials,Education Materials,https://www.finelib.com/education/education-materials
+education,education-online-resources,Education Online Resources,https://www.finelib.com/education/education-online-resources
+education,education-technology,Education Technology,https://www.finelib.com/education/education-technology
+education,educational-centers,Educational Centers,https://www.finelib.com/education/educational-centers
+education,educational-competitions,Educational Competitions,https://www.finelib.com/education/educational-competitions
+education,educational-conferences,Educational Conferences,https://www.finelib.com/education/educational-conferences
+education,educational-consultants,Educational Consultants,https://www.finelib.com/education/educational-consultants
+education,educational-organisation,Educational Organisation,https://www.finelib.com/education/educational-organisation
+education,educational-software,Educational Software,https://www.finelib.com/education/educational-software
+education,elementary-schools,Elementary Schools,https://www.finelib.com/education/elementary-schools
+education,exams-and-testing-services,Exams and Testing Services,https://www.finelib.com/education/exams-and-testing-services
+education,international-schools,International Schools,https://www.finelib.com/education/international-schools
+education,language-schools,Language Schools,https://www.finelib.com/education/language-schools
+education,libraries,Libraries,https://www.finelib.com/education/libraries
+education,maritime-academy,Maritime Academy,https://www.finelib.com/education/maritime-academy
+education,nurseries-and-kindergarten,Nurseries and Kindergarten,https://www.finelib.com/education/nurseries-and-kindergarten
+education,pre-school,Pre School,https://www.finelib.com/education/pre-school
+education,private-tutoring,Private Tutoring,https://www.finelib.com/education/private-tutoring
+education,schools-in-nigeria,Schools in Nigeria,https://www.finelib.com/education/schools-in-nigeria
+education,schools-in-nigeria,See Also - Types of Schools in Nigeria,https://www.finelib.com/education/schools-in-nigeria
+education,secondary-schools,Secondary Schools,https://www.finelib.com/education/secondary-schools
+education,training-centers,Training Centers,https://www.finelib.com/education/training-centers
+education,universities-and-colleges,Universities and Colleges,https://www.finelib.com/education/universities-and-colleges
+events,create,Create Events,https://www.finelib.com/events/create
+travel,tour-operators,Tour Operators,https://www.finelib.com/travel/tour-operators
+travel,tourism,Tourism,https://www.finelib.com/travel/tourism
+travel,travel-agencies,Travel Agencies,https://www.finelib.com/travel/travel-agencies

@@ -17,6 +17,8 @@ class DiscoveryContext(BaseModel):
 
     city: str
 
+    root: str | None = None
+
     industry: str | None = None
 
     sector: str | None = None
