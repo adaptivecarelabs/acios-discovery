@@ -1,0 +1,325 @@
+{
+  "Abia": [
+    "Aba",
+    "Umuahia",
+    "Ohafia",
+    "Arochukwu",
+    "Bende",
+    "Osisioma",
+    "Isuikwuato"
+  ],
+  "Adamawa": [
+    "Yola",
+    "Mubi",
+    "Numan",
+    "Ganye",
+    "Michika",
+    "Mayo-Belwa",
+    "Hong"
+  ],
+  "Akwa Ibom": [
+    "Uyo",
+    "Eket",
+    "Ikot Ekpene",
+    "Oron",
+    "Ikot Abasi",
+    "Abak",
+    "Etinan"
+  ],
+  "Anambra": [
+    "Awka",
+    "Onitsha",
+    "Nnewi",
+    "Ekwulobia",
+    "Ihiala",
+    "Aguata",
+    "Ogbaru"
+  ],
+  "Bauchi": [
+    "Bauchi",
+    "Azare",
+    "Misau",
+    "Ningi",
+    "Jama'are",
+    "Toro",
+    "Alkaleri"
+  ],
+  "Bayelsa": [
+    "Yenagoa",
+    "Brass",
+    "Ogbia",
+    "Sagbama",
+    "Amassoma",
+    "Ekeremor",
+    "Nembe"
+  ],
+  "Benue": [
+    "Makurdi",
+    "Gboko",
+    "Otukpo",
+    "Katsina-Ala",
+    "Vandeikya",
+    "Adoka",
+    "Oju"
+  ],
+  "Borno": [
+    "Maiduguri",
+    "Biu",
+    "Bama",
+    "Monguno",
+    "Gwoza",
+    "Dikwa",
+    "Chibok"
+  ],
+  "Cross River": [
+    "Calabar",
+    "Ikom",
+    "Ogoja",
+    "Obudu",
+    "Ugep",
+    "Akamkpa",
+    "Odukpani"
+  ],
+  "Delta": [
+    "Asaba",
+    "Warri",
+    "Effurun",
+    "Sapele",
+    "Agbor",
+    "Ughelli",
+    "Oleh",
+    "Kwale"
+  ],
+  "Ebonyi": [
+    "Abakaliki",
+    "Afikpo",
+    "Onueke",
+    "Edda",
+    "Ugbodo",
+    "Ishiagu"
+  ],
+  "Edo": [
+    "Benin City",
+    "Auchi",
+    "Ekpoma",
+    "Uromi",
+    "Igarra",
+    "Irrua",
+    "Sabongida-Ora"
+  ],
+  "Ekiti": [
+    "Ado-Ekiti",
+    "Ikere-Ekiti",
+    "Ijero-Ekiti",
+    "Ikole-Ekiti",
+    "Oye-Ekiti",
+    "Aramoko-Ekiti"
+  ],
+  "Enugu": [
+    "Enugu",
+    "Nsukka",
+    "Agbani",
+    "Awgu",
+    "Udi",
+    "Oji River"
+  ],
+  "FCT": [
+    "Abuja",
+    "Gwagwalada",
+    "Kuje",
+    "Bwari",
+    "Kwali",
+    "Abaji",
+    "Asokoro",
+    "Maitama",
+    "Garki",
+    "Wuse",
+    "Kubwa",
+    "Lugbe"
+  ],
+  "Gombe": [
+    "Gombe",
+    "Kaltungo",
+    "Billiri",
+    "Dukku",
+    "Nafada",
+    "Bajoga"
+  ],
+  "Imo": [
+    "Owerri",
+    "Orlu",
+    "Okigwe",
+    "Mgbidi",
+    "Oguta",
+    "Anara",
+    "Arondizuogu"
+  ],
+  "Jigawa": [
+    "Dutse",
+    "Hadejia",
+    "Gumel",
+    "Birnin Kudu",
+    "Kazaure",
+    "Ringim"
+  ],
+  "Kaduna": [
+    "Kaduna",
+    "Zaria",
+    "Kafanchan",
+    "Kachia",
+    "Birnin Gwari",
+    "Zonkwa"
+  ],
+  "Kano": [
+    "Kano",
+    "Wudil",
+    "Dambatta",
+    "Gwarzo",
+    "Karaye",
+    "Rano"
+  ],
+  "Katsina": [
+    "Katsina",
+    "Daura",
+    "Funtua",
+    "Malumfashi",
+    "Mani",
+    "Kankia"
+  ],
+  "Kebbi": [
+    "Birnin Kebbi",
+    "Argungu",
+    "Yauri",
+    "Zuru",
+    "Jega",
+    "Gwandu"
+  ],
+  "Kogi": [
+    "Lokoja",
+    "Okene",
+    "Idah",
+    "Ankpa",
+    "Kabba",
+    "Ajaokuta",
+    "Anyigba"
+  ],
+  "Kwara": [
+    "Ilorin",
+    "Offa",
+    "Omu-Aran",
+    "Jebba",
+    "Patigi",
+    "Lafiagi"
+  ],
+  "Lagos": [
+    "Ikeja",
+    "Lekki",
+    "Yaba",
+    "Victoria Island",
+    "Ikoyi",
+    "Surulere",
+    "Ikorodu",
+    "Badagry",
+    "Epe",
+    "Oshodi",
+    "Apapa",
+    "Alimosho"
+  ],
+  "Nasarawa": [
+    "Lafia",
+    "Keffi",
+    "Karu",
+    "Akwanga",
+    "Nasarawa",
+    "Doma"
+  ],
+  "Niger": [
+    "Minna",
+    "Bida",
+    "Suleja",
+    "Kontagora",
+    "Lapai",
+    "New Bussa"
+  ],
+  "Ogun": [
+    "Abeokuta",
+    "Ijebu Ode",
+    "Sagamu",
+    "Ota",
+    "Ilaro",
+    "Iperu",
+    "Ifo"
+  ],
+  "Ondo": [
+    "Akure",
+    "Ondo City",
+    "Owo",
+    "Ikare",
+    "Okitipupa",
+    "Ore"
+  ],
+  "Osun": [
+    "Osogbo",
+    "Ile-Ife",
+    "Ilesa",
+    "Ede",
+    "Ikirun",
+    "Ila Orangun",
+    "Ikire"
+  ],
+  "Oyo": [
+    "Ibadan",
+    "Ogbomoso",
+    "Oyo",
+    "Iseyin",
+    "Saki",
+    "Eruwa"
+  ],
+  "Plateau": [
+    "Jos",
+    "Bukuru",
+    "Mangu",
+    "Pankshin",
+    "Shendam",
+    "Barkin Ladi"
+  ],
+  "Rivers": [
+    "Port Harcourt",
+    "Bonny",
+    "Omoku",
+    "Buguma",
+    "Eleme",
+    "Degema",
+    "Ahoada",
+    "Opobo"
+  ],
+  "Sokoto": [
+    "Sokoto",
+    "Wurno",
+    "Illela",
+    "Gwadabawa",
+    "Tambuwal"
+  ],
+  "Taraba": [
+    "Jalingo",
+    "Wukari",
+    "Takum",
+    "Bali",
+    "Gembu",
+    "Serti"
+  ],
+  "Yobe": [
+    "Damaturu",
+    "Potiskum",
+    "Gashua",
+    "Nguru",
+    "Geidam"
+  ],
+  "Zamfara": [
+    "Gusau",
+    "Kaura Namoda",
+    "Talata Mafara",
+    "Anka",
+    "Maru"
+  ]
+}

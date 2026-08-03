@@ -4,6 +4,7 @@ from .identity import BusinessIdentity
 from .models import RawDiscovery
 from .record import DiscoveryRecord
 from .registration import BusinessRegistration
+from .repository import DiscoveryRepository
 
 __all__ = [
     "DiscoveryContext",
@@ -12,5 +13,6 @@ __all__ = [
     "BusinessIdentity",
     "BusinessRegistration",
     "BusinessContact",
+    "DiscoveryRepository",
 ]
 

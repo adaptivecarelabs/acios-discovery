@@ -1,7 +1,7 @@
-from acios_discovery.domain.discovery.record import DiscoveryRecord
-from acios_discovery.domain.repositories.discovery_repository import (
+from acios_discovery.domain.discovery import (
     DiscoveryRepository,
 )
+from acios_discovery.domain.discovery.record import DiscoveryRecord
 
 
 class InMemoryDiscoveryRepository(

@@ -5,10 +5,10 @@ from acios_discovery.application.enrichment.finelib_enricher import (
     FinelibEnricher,
 )
 from acios_discovery.domain.crawling.job import CrawlJob
-from acios_discovery.domain.http import HttpClient
-from acios_discovery.domain.repositories.discovery_repository import (
+from acios_discovery.domain.discovery import (
     DiscoveryRepository,
 )
+from acios_discovery.domain.http import HttpClient
 from acios_discovery.infrastructure.connectors.finelib.connector import (
     FinelibConnector,
 )
