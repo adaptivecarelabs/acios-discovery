@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from acios_discovery.domain.crawling import CrawlJob
 from acios_discovery.domain.events.crawl_event import (
     CrawlEvent,
 )
@@ -16,4 +17,8 @@ class JobCompletedEvent(
     has completed.
     """
 
-    jobs_completed: int = 1
+    job: CrawlJob
+
+    pages_crawled: int
+
+    companies_discovered: int

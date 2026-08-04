@@ -4,6 +4,7 @@ from acios_discovery.application.events.in_memory_event_publisher import (
 from acios_discovery.application.subscribers.crawl_persistence_subscriber import (
     CrawlPersistenceSubscriber,
 )
+from acios_discovery.domain.crawling import CrawlJob
 from acios_discovery.domain.events.company_discovered_event import (
     CompanyDiscoveredEvent,
 )
@@ -13,9 +14,18 @@ from acios_discovery.domain.events.job_completed_event import (
 from acios_discovery.domain.events.page_crawled_event import (
     PageCrawledEvent,
 )
+from acios_discovery.domain.sources import Source
 
 
 def test_persistence_subscriber_receives_events():
+
+    job = CrawlJob(
+        source=Source.FINELIB,
+        listing_url="https://example.com",
+        state="Lagos",
+        city="Yaba",
+        category_slug="restaurants",
+    )
 
     publisher = InMemoryEventPublisher()
 
@@ -26,7 +36,11 @@ def test_persistence_subscriber_receives_events():
     )
 
     publisher.publish(
-        JobCompletedEvent(),
+        JobCompletedEvent(
+            job=job,
+            pages_crawled=1,
+            companies_discovered=2,
+        )
     )
 
     publisher.publish(

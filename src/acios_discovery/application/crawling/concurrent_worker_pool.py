@@ -78,7 +78,11 @@ class ConcurrentWorkerPool:
                 async with lock:
 
                     self._publisher.publish(
-                        JobCompletedEvent(),
+                        JobCompletedEvent(
+                            job=job,
+                            pages_crawled=crawl_result.pages_crawled,
+                            companies_discovered=crawl_result.companies_discovered,
+                        )
                     )
 
                     for _ in range(crawl_result.pages_crawled):
