@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from acios_discovery.domain.discovery.record import (
+    DiscoveryRecord,
+)
 
 
 class ListingCrawlResult(BaseModel):
@@ -11,3 +15,9 @@ class ListingCrawlResult(BaseModel):
     pages_crawled: int = 0
 
     companies_discovered: int = 0
+
+    records: list[
+        DiscoveryRecord
+    ] = Field(
+        default_factory=list,
+    )

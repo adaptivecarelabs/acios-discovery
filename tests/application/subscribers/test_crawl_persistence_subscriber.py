@@ -5,6 +5,9 @@ from acios_discovery.application.subscribers.crawl_persistence_subscriber import
     CrawlPersistenceSubscriber,
 )
 from acios_discovery.domain.crawling import CrawlJob
+from acios_discovery.domain.discovery.context import DiscoveryContext
+from acios_discovery.domain.discovery.models import RawDiscovery
+from acios_discovery.domain.discovery.record import DiscoveryRecord
 from acios_discovery.domain.events.company_discovered_event import (
     CompanyDiscoveredEvent,
 )
@@ -17,7 +20,23 @@ from acios_discovery.domain.events.page_crawled_event import (
 from acios_discovery.domain.sources import Source
 
 
-def test_persistence_subscriber_receives_events():
+def make_record() -> DiscoveryRecord:
+    return DiscoveryRecord(
+        context=DiscoveryContext(
+            source="Finelib",
+            state="Lagos",
+            city="Yaba",
+            category="restaurants",
+            listing_url="https://example.com",
+        ),
+        company=RawDiscovery(
+            source="Finelib",
+            business_name="ABC Ltd",
+        ),
+    )
+
+
+async def test_persistence_subscriber_receives_events():
 
     job = CrawlJob(
         source=Source.FINELIB,
@@ -35,7 +54,7 @@ def test_persistence_subscriber_receives_events():
         subscriber,
     )
 
-    publisher.publish(
+    await publisher.publish(
         JobCompletedEvent(
             job=job,
             pages_crawled=1,
@@ -43,12 +62,18 @@ def test_persistence_subscriber_receives_events():
         )
     )
 
-    publisher.publish(
-        PageCrawledEvent(),
+    await publisher.publish(
+        PageCrawledEvent(
+            job=job,
+            page_number=1,
+            companies_found=2,
+        )
     )
 
-    publisher.publish(
-        CompanyDiscoveredEvent(),
+    await publisher.publish(
+        CompanyDiscoveredEvent(
+            record=make_record(),
+        )
     )
 
     assert len(

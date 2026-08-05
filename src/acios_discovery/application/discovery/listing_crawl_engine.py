@@ -52,6 +52,8 @@ class ListingCrawlEngine:
 
         companies = 0
 
+        all_records = []
+
         while True:
 
             listing = self._url_builder.build(
@@ -75,7 +77,13 @@ class ListingCrawlEngine:
             )
 
             for record in records:
-                await self._repository.save(record)
+                await self._repository.save(
+                    record,
+                )
+
+                all_records.append(
+                    record,
+                )
 
             companies += len(
                 records,
@@ -93,4 +101,5 @@ class ListingCrawlEngine:
         return ListingCrawlResult(
             pages_crawled=pages,
             companies_discovered=companies,
+            records=all_records,
         )

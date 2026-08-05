@@ -24,7 +24,7 @@ class CrawlPersistenceSubscriber:
 
         self.events: list[CrawlEvent] = []
 
-    def __call__(
+    async def __call__(
         self,
         event: CrawlEvent,
     ) -> None:

@@ -13,6 +13,9 @@ from acios_discovery.application.metrics.crawl_metrics_service import (
     CrawlMetricsService,
 )
 from acios_discovery.domain.crawling import CrawlJob
+from acios_discovery.domain.discovery.context import DiscoveryContext
+from acios_discovery.domain.discovery.models import RawDiscovery
+from acios_discovery.domain.discovery.record import DiscoveryRecord
 from acios_discovery.domain.events.company_discovered_event import (
     CompanyDiscoveredEvent,
 )
@@ -28,6 +31,22 @@ from acios_discovery.infrastructure.queue.in_memory_job_queue import (
 )
 
 
+def make_record(name: str) -> DiscoveryRecord:
+    return DiscoveryRecord(
+        context=DiscoveryContext(
+            source="Finelib",
+            state="Lagos",
+            city="Yaba",
+            category="restaurants",
+            listing_url="https://example.com",
+        ),
+        company=RawDiscovery(
+            source="Finelib",
+            business_name=name,
+        ),
+    )
+
+
 class FakeWorker:
 
     async def execute(self, job):
@@ -35,6 +54,10 @@ class FakeWorker:
         return ListingCrawlResult(
             pages_crawled=1,
             companies_discovered=2,
+            records=[
+                make_record("Company A"),
+                make_record("Company B"),
+            ]
         )
 
 
@@ -44,7 +67,7 @@ class EventRecorder:
 
         self.events = []
 
-    def __call__(self, event):
+    async def __call__(self, event):
 
         self.events.append(event)
 
@@ -162,6 +185,20 @@ async def test_pool_publishes_events():
         isinstance(event, PageCrawledEvent)
         for event in page_events
     )
+
+    for event in page_events:
+
+        assert event.job.source is Source.FINELIB
+
+        assert event.job.state == "Lagos"
+
+        assert event.job.city == "Yaba"
+
+        assert event.job.category_slug == "restaurants"
+
+        assert event.page_number == 1
+
+        assert event.companies_found == 2
 
     assert len(company_events) == 20
 

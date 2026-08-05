@@ -77,7 +77,7 @@ class ConcurrentWorkerPool:
 
                 async with lock:
 
-                    self._publisher.publish(
+                    await self._publisher.publish(
                         JobCompletedEvent(
                             job=job,
                             pages_crawled=crawl_result.pages_crawled,
@@ -85,16 +85,22 @@ class ConcurrentWorkerPool:
                         )
                     )
 
-                    for _ in range(crawl_result.pages_crawled):
-                        self._publisher.publish(
-                            PageCrawledEvent(),
+                    for page in range(crawl_result.pages_crawled):
+                        await self._publisher.publish(
+                            PageCrawledEvent(
+                                job=job,
+                                page_number=page + 1,
+                                companies_found=(
+                                    crawl_result.companies_discovered
+                                ),
+                            )
                         )
 
-                    for _ in range(
-                        crawl_result.companies_discovered
-                    ):
-                        self._publisher.publish(
-                            CompanyDiscoveredEvent(),
+                    for record in crawl_result.records:
+                        await self._publisher.publish(
+                            CompanyDiscoveredEvent(
+                                record=record,
+                            )
                         )
 
         await asyncio.gather(

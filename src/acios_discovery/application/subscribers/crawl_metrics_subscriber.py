@@ -27,7 +27,7 @@ class CrawlMetricsSubscriber:
 
         self._metrics = metrics
 
-    def __call__(
+    async def __call__(
         self,
         event,
     ) -> None:

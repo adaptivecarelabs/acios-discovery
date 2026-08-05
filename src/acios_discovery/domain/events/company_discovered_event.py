@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from acios_discovery.domain.discovery.record import DiscoveryRecord
 from acios_discovery.domain.events.crawl_event import (
     CrawlEvent,
 )
@@ -12,6 +13,8 @@ class CompanyDiscoveredEvent(
     CrawlEvent,
 ):
     """
-    Raised whenever one or more
-    companies have been discovered.
+    Raised whenever a company
+    has been discovered.
     """
+
+    record: DiscoveryRecord

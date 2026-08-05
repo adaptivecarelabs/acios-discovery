@@ -1,18 +1,28 @@
 from acios_discovery.application.events.in_memory_event_publisher import (
     InMemoryEventPublisher,
 )
+from acios_discovery.domain.crawling import CrawlJob
 from acios_discovery.domain.events.page_crawled_event import (
     PageCrawledEvent,
 )
+from acios_discovery.domain.sources import Source
 
 
-def test_publish_event():
+async def test_publish_event():
+
+    job = CrawlJob(
+        source=Source.FINELIB,
+        listing_url="https://example.com",
+        state="Lagos",
+        city="Yaba",
+        category_slug="restaurants",
+    )
 
     publisher = InMemoryEventPublisher()
 
     received = []
 
-    def handler(
+    async def handler(
         event,
     ):
 
@@ -24,8 +34,12 @@ def test_publish_event():
         handler,
     )
 
-    publisher.publish(
-        PageCrawledEvent(),
+    await publisher.publish(
+        PageCrawledEvent(
+            job=job,
+            page_number=1,
+            companies_found=2,
+        )
     )
 
     assert len(
@@ -38,13 +52,21 @@ def test_publish_event():
     )
 
 
-def test_unsubscribe():
+async def test_unsubscribe():
+
+    job = CrawlJob(
+        source=Source.FINELIB,
+        listing_url="https://example.com",
+        state="Lagos",
+        city="Yaba",
+        category_slug="restaurants",
+    )
 
     publisher = InMemoryEventPublisher()
 
     received = []
 
-    def handler(
+    async def handler(
         event,
     ):
 
@@ -60,8 +82,12 @@ def test_unsubscribe():
         handler,
     )
 
-    publisher.publish(
-        PageCrawledEvent(),
+    await publisher.publish(
+        PageCrawledEvent(
+            job=job,
+            page_number=1,
+            companies_found=2,
+        )
     )
 
     assert received == []

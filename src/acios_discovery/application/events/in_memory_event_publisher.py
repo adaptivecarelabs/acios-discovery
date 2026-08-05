@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 
 from acios_discovery.application.events.crawl_event_publisher import (
     CrawlEventPublisher,
@@ -27,17 +27,17 @@ class InMemoryEventPublisher(
         self._handlers: list[
             Callable[
                 [CrawlEvent],
-                None,
+                Awaitable[None],
             ]
         ] = []
 
-    def publish(
+    async def publish(
         self,
         event: CrawlEvent,
     ) -> None:
 
         for handler in self._handlers:
-            handler(
+            await handler(
                 event,
             )
 

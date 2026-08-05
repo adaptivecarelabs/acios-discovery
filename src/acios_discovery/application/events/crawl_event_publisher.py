@@ -18,7 +18,7 @@ class CrawlEventPublisher(
     """
 
     @abstractmethod
-    def publish(
+    async def publish(
         self,
         event: CrawlEvent,
     ) -> None:
