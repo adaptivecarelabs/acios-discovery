@@ -1,6 +1,7 @@
 from acios_discovery.domain.discovery.models import (
     RawDiscovery,
 )
+from acios_discovery.domain.sources import Source
 from acios_discovery.infrastructure.repositories.in_memory_company_match_repository import (
     InMemoryCompanyMatchRepository,
 )
@@ -10,7 +11,7 @@ def make_company(
     name: str,
 ) -> RawDiscovery:
     return RawDiscovery(
-        source="Finelib",
+        source=Source.FINELIB,
         business_name=name,
         city="Yaba",
         state="Lagos",

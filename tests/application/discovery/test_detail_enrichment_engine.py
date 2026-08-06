@@ -14,19 +14,20 @@ from acios_discovery.domain.discovery.record import DiscoveryRecord
 from acios_discovery.domain.repositories.discovery_repository import (
     DiscoveryRepository,
 )
+from acios_discovery.domain.sources import Source
 
 
 def make_record() -> DiscoveryRecord:
     return DiscoveryRecord(
         context=DiscoveryContext(
-            source="Finelib",
+            source=Source.FINELIB,
             state="Lagos",
             city="Yaba",
             category="restaurants",
             listing_url="https://example.com",
         ),
         company=RawDiscovery(
-            source="Finelib",
+            source=Source.FINELIB,
             business_name="ABC Ltd",
             detail_url="https://example.com/company/abc",
         ),

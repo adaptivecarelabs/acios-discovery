@@ -9,6 +9,7 @@ from acios_discovery.application.resolution.entity_resolution_service import (
 from acios_discovery.domain.company.company import Company
 from acios_discovery.domain.company.company_id import CompanyId
 from acios_discovery.domain.discovery.models import RawDiscovery
+from acios_discovery.domain.sources import Source
 from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
     InMemoryCompanyRepository,
 )
@@ -46,7 +47,7 @@ async def test_returns_no_match_when_repository_is_empty():
     )
 
     discovery = RawDiscovery(
-        source="Finelib",
+        source=Source.FINELIB,
         business_name="Drugstoc EHub Ltd",
     )
 
@@ -65,7 +66,8 @@ async def test_detects_duplicate_by_name():
     repository = InMemoryCompanyRepository()
 
     existing = make_company(
-        "Drugstoc EHub Ltd",
+        canonical_name="Drugstoc EHub Ltd",
+        phone="08030000000",
     )
 
     await repository.add(
@@ -78,8 +80,9 @@ async def test_detects_duplicate_by_name():
     )
 
     incoming = RawDiscovery(
-        source="Finelib",
+        source=Source.FINELIB,
         business_name="Drugstoc EHub Limited",
+        phone_numbers=["08030000000"],
     )
 
     result = await service.resolve(
@@ -115,7 +118,7 @@ async def test_returns_best_candidate():
     )
 
     incoming = RawDiscovery(
-        source="Finelib",
+        source=Source.FINELIB,
         business_name="Drugstoc EHub Limited",
     )
 
@@ -144,7 +147,7 @@ async def test_non_duplicate_when_similarity_is_low():
     )
 
     incoming = RawDiscovery(
-        source="Finelib",
+        source=Source.FINELIB,
         business_name="Drugstoc",
     )
 
@@ -176,7 +179,7 @@ async def test_repository_candidates_are_used():
 
     result = await service.resolve(
         RawDiscovery(
-            source="Finelib",
+            source=Source.FINELIB,
             business_name="Company 3",
         )
     )

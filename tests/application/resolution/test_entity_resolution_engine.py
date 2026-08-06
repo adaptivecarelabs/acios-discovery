@@ -8,6 +8,7 @@ from acios_discovery.domain.company.company_id import CompanyId
 from acios_discovery.domain.discovery.models import (
     RawDiscovery,
 )
+from acios_discovery.domain.sources import Source
 
 
 def make_company(
@@ -38,7 +39,7 @@ def make_discovery(
 ) -> RawDiscovery:
 
     return RawDiscovery(
-        source="Finelib",
+        source=Source.FINELIB,
         business_name=name,
         phone_numbers=[phone] if phone else [],
         website=website,

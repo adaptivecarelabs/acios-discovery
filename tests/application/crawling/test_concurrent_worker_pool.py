@@ -34,14 +34,14 @@ from acios_discovery.infrastructure.queue.in_memory_job_queue import (
 def make_record(name: str) -> DiscoveryRecord:
     return DiscoveryRecord(
         context=DiscoveryContext(
-            source="Finelib",
+            source=Source.FINELIB,
             state="Lagos",
             city="Yaba",
             category="restaurants",
             listing_url="https://example.com",
         ),
         company=RawDiscovery(
-            source="Finelib",
+            source=Source.FINELIB,
             business_name=name,
         ),
     )

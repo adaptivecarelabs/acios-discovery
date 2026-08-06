@@ -18,6 +18,7 @@ from acios_discovery.application.resolution.entity_resolution_service import (
 from acios_discovery.domain.discovery.models import (
     RawDiscovery,
 )
+from acios_discovery.domain.sources import Source
 from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
     InMemoryCompanyRepository,
 )
@@ -29,7 +30,7 @@ def make_discovery(
 ) -> RawDiscovery:
 
     return RawDiscovery(
-        source="Finelib",
+        source=Source.FINELIB,
         business_name=name,
         phone_numbers=[phone] if phone else [],
     )

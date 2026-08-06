@@ -24,6 +24,10 @@ class FinelibConnector(BaseConnector):
     It does NOT enrich businesses from their detail pages.
     """
 
+    @property
+    def source(self) -> Source:
+        return Source.FINELIB
+
     def __init__(
         self,
         parser: FinelibParser,

@@ -4,12 +4,13 @@ from acios_discovery.application.company.company_factory import (
 from acios_discovery.domain.discovery.models import (
     RawDiscovery,
 )
+from acios_discovery.domain.sources import Source
 
 
 def make_discovery() -> RawDiscovery:
 
     return RawDiscovery(
-        source="Finelib",
+        source=Source.FINELIB,
         business_name="Drugstoc EHub Ltd",
         phone_numbers=[
             "08030000000",
@@ -50,7 +51,7 @@ def test_factory_creates_company():
 
     assert "Pharmacy" in company.categories
 
-    assert "Finelib" in company.sources
+    assert Source.FINELIB in company.sources
 
 
 def test_factory_generates_new_ids():

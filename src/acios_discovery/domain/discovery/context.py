@@ -2,6 +2,8 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
+from acios_discovery.domain.sources import Source
+
 
 class DiscoveryContext(BaseModel):
     """
@@ -9,7 +11,7 @@ class DiscoveryContext(BaseModel):
     a company was discovered.
     """
 
-    source: str
+    source: Source
 
     country: str = "Nigeria"
 

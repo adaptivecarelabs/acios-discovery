@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from acios_discovery.domain.discovery.record import (
     DiscoveryRecord,
 )
+from acios_discovery.domain.sources import Source
 
 
 class ListingCrawlResult(BaseModel):
@@ -21,3 +22,11 @@ class ListingCrawlResult(BaseModel):
     ] = Field(
         default_factory=list,
     )
+
+    @property
+    def source(self) -> Source:
+        if not self.records:
+            raise ValueError(
+                "ListingCrawlResult has no records."
+            )
+        return self.records[0].context.source
