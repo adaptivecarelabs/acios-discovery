@@ -9,12 +9,8 @@ from acios_discovery.application.crawling.crawl_executor import (
 from acios_discovery.application.discovery.listing_crawl_result import (
     ListingCrawlResult,
 )
-from acios_discovery.domain.crawling import (
-    CrawlJob,
-)
-from acios_discovery.domain.sources import (
-    Source,
-)
+from acios_discovery.domain.crawling import CrawlJob
+from acios_discovery.domain.sources import Source
 from acios_discovery.infrastructure.queue.in_memory_job_queue import (
     InMemoryJobQueue,
 )
@@ -71,7 +67,6 @@ async def test_executor_processes_all_jobs():
     )
 
     assert result.jobs_processed == 2
-
     assert result.pages_crawled == 4
-
     assert result.companies_discovered == 20
+    assert result.jobs_failed == 0

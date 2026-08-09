@@ -3,10 +3,10 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
+
 from alembic import context
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from dotenv import load_dotenv
+from sqlalchemy import engine_from_config, pool
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = PROJECT_ROOT / "src"
@@ -14,9 +14,7 @@ SRC_ROOT = PROJECT_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from acios_discovery.infrastructure.persistence import orm
 from acios_discovery.infrastructure.persistence.metadata import Base
-
 
 config = context.config
 load_dotenv()

@@ -6,6 +6,8 @@ from acios_discovery.infrastructure.persistence.mappers.discovery_mapper import 
 def test_discovery_mapper_round_trip(
     finelib_restaurants_fixture: str,
 ) -> None:
+    import asyncio
+
     from acios_discovery.infrastructure.connectors.finelib.connector import (
         FinelibConnector,
     )
@@ -15,8 +17,6 @@ def test_discovery_mapper_round_trip(
     from acios_discovery.infrastructure.connectors.finelib.listing_parser import (
         FinelibParser,
     )
-
-    import asyncio
 
     connector = FinelibConnector(
         parser=FinelibParser(),

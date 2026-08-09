@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 
-class CrawlExecutionResult(BaseModel):
+@dataclass(slots=True)
+class CrawlExecutionResult:
     """
-    Summary of an execution run.
+    Aggregate result of sequential crawl execution.
     """
 
     jobs_processed: int = 0
-
     pages_crawled: int = 0
-
     companies_discovered: int = 0
+    jobs_failed: int = 0

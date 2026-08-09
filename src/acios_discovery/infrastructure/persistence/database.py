@@ -13,7 +13,6 @@ from acios_discovery.infrastructure.persistence.config import (
     DATABASE_URL,
 )
 
-
 #
 # SQLAlchemy Async Engine
 #

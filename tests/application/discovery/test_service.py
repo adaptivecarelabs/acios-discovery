@@ -1,7 +1,7 @@
 from dataclasses import replace
 
 import pytest
-
+from acios_discovery.domain.sources import Source
 from acios_discovery.application.discovery.service import (
     DiscoveryService,
 )
@@ -93,7 +93,7 @@ async def test_service_saves_new_records(
     )
 
     job = CrawlJob(
-        source="finelib",
+        source=Source.FINELIB,
         listing_url="https://example.com",
         state="Lagos",
         city="Lagos",
@@ -102,6 +102,7 @@ async def test_service_saves_new_records(
 
     result = await service.run(job)
 
+    assert result.pages_crawled == 1
     assert result.records_found == 1
     assert result.records_saved == 1
     assert result.duplicates == 0
@@ -140,7 +141,7 @@ async def test_service_skips_duplicates(
     )
 
     job = CrawlJob(
-        source="finelib",
+        source=Source.FINELIB,
         listing_url="https://example.com",
         state="Lagos",
         city="Lagos",
@@ -149,6 +150,7 @@ async def test_service_skips_duplicates(
 
     result = await service.run(job)
 
+    assert result.pages_crawled == 1
     assert result.records_found == 1
     assert result.records_saved == 0
     assert result.duplicates == 1
@@ -177,7 +179,7 @@ async def test_service_handles_empty_listing():
     )
 
     job = CrawlJob(
-        source="finelib",
+        source=Source.FINELIB,
         listing_url="https://example.com",
         state="Lagos",
         city="Lagos",
@@ -186,6 +188,7 @@ async def test_service_handles_empty_listing():
 
     result = await service.run(job)
 
+    assert result.pages_crawled == 1
     assert result.records_found == 0
     assert result.records_saved == 0
     assert result.duplicates == 0
@@ -244,7 +247,7 @@ async def test_service_crawls_multiple_listing_pages(
     )
 
     job = CrawlJob(
-        source="finelib",
+        source=Source.FINELIB,
         listing_url="https://example.com/page-1",
         state="Lagos",
         city="Lagos",
@@ -253,6 +256,7 @@ async def test_service_crawls_multiple_listing_pages(
 
     result = await service.run(job)
 
+    assert result.pages_crawled == 2
     assert result.records_found == 2
     assert result.records_saved == 2
     assert result.duplicates == 0
@@ -295,7 +299,7 @@ async def test_service_does_not_revisit_same_page(
     )
 
     job = CrawlJob(
-        source="finelib",
+        source=Source.FINELIB,
         listing_url="https://example.com/page-1",
         state="Lagos",
         city="Lagos",
@@ -304,6 +308,7 @@ async def test_service_does_not_revisit_same_page(
 
     result = await service.run(job)
 
+    assert result.pages_crawled == 1
     assert result.records_found == 1
     assert result.records_saved == 1
 

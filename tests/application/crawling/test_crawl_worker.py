@@ -6,25 +6,21 @@ from acios_discovery.application.crawling.crawl_worker import (
 from acios_discovery.application.discovery.listing_crawl_result import (
     ListingCrawlResult,
 )
-from acios_discovery.domain.crawling import (
-    CrawlJob,
-)
-from acios_discovery.domain.sources import (
-    Source,
-)
+from acios_discovery.domain.crawling import CrawlJob
+from acios_discovery.domain.sources import Source
 
 
 class FakeEngine:
-
     def __init__(self):
-
         self.calls = []
 
     async def execute(self, plan):
-
         self.calls.append(plan)
 
-        return ListingCrawlResult()
+        return ListingCrawlResult(
+            pages_crawled=1,
+            companies_discovered=2,
+        )
 
 
 @pytest.mark.asyncio
@@ -52,8 +48,4 @@ async def test_worker_executes_one_job():
     )
 
     assert len(engine.calls) == 1
-
     assert engine.calls[0].city == "Yaba"
-
-
-
