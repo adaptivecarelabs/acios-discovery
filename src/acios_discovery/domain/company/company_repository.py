@@ -64,25 +64,51 @@ class CompanyRepository(ABC):
         self,
         canonical_name: str,
     ) -> Company | None:
+        """
+        Find a company by its canonical name.
+        """
         ...
+
+
+    @abstractmethod
+    async def find_by_alias(
+        self,
+        alias: str,
+    ) -> Company | None:
+        """
+        Find a company by one of its aliases.
+        """
+        ...
+
 
     @abstractmethod
     async def find_by_phone(
         self,
         phone: str,
     ) -> Company | None:
+        """
+        Find a company by phone number.
+        """
         ...
+
 
     @abstractmethod
     async def find_by_email(
         self,
         email: str,
     ) -> Company | None:
+        """
+        Find a company by email address.
+        """
         ...
+
 
     @abstractmethod
     async def find_by_website(
         self,
         website: str,
     ) -> Company | None:
+        """
+        Find a company by website.
+        """
         ...

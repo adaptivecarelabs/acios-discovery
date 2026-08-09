@@ -91,7 +91,7 @@ class CompanyMergeService:
         # Source
         #
 
-        company.sources.add(
+        company.add_source(
             discovery.source,
         )
 
@@ -101,4 +101,48 @@ class CompanyMergeService:
 
         company.touch()
 
+        #
+        # Enrichment
+        #
+
+        company.add_email(
+            discovery.email,
+        )
+
+        company.add_website(
+            discovery.website,
+        )
+
+        company.social_links.update(
+            discovery.social_links,
+        )
+
+        company.product_types.update(
+            discovery.product_types,
+        )
+
+        company.payment_methods.update(
+            discovery.payment_methods,
+        )
+
+        if (
+            company.year_founded is None
+            and discovery.year_founded is not None
+        ):
+            company.year_founded = discovery.year_founded
+
+        if (
+            company.employee_count is None
+            and discovery.employee_count is not None
+        ):
+            company.employee_count = discovery.employee_count
+
+        if (
+            company.business_locations is None
+            and discovery.business_locations is not None
+        ):
+            company.business_locations = discovery.business_locations
+
         return company
+
+    

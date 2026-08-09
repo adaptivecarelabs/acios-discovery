@@ -1,4 +1,3 @@
-
 from dataclasses import replace
 
 import pytest
@@ -48,6 +47,7 @@ class FakeConnector:
     def next_page_url(
         self,
         html: str,
+        current_url: str,
     ) -> str | None:
 
         return self.next_pages.get(
@@ -205,6 +205,7 @@ async def test_service_crawls_multiple_listing_pages(
     repository = InMemoryDiscoveryRepository()
 
     page1_record = sample_discovery_record
+
     page2_record = sample_discovery_record.model_copy(
         update={
             "company": replace(

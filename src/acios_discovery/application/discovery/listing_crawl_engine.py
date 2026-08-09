@@ -18,6 +18,7 @@ from acios_discovery.domain.discovery.repository import (
 from acios_discovery.infrastructure.connectors.finelib.connector import (
     FinelibConnector,
 )
+from acios_discovery.shared.logging import logger
 
 
 class ListingCrawlEngine:
@@ -46,37 +47,59 @@ class ListingCrawlEngine:
         plan: CrawlPlan,
     ) -> ListingCrawlResult:
 
-        page = plan.page
+        initial_listing = self._url_builder.build(
+            plan,
+        )
+
+        current_url = initial_listing.url
 
         pages = 0
-
         companies = 0
 
         all_records = []
 
-        while True:
+        visited_urls: set[str] = set()
 
-            listing = self._url_builder.build(
-                plan.model_copy(
-                    update={
-                        "page": page,
-                    }
+        while current_url is not None:
+
+            if current_url in visited_urls:
+
+                logger.warning(
+                    "Pagination loop detected at %s",
+                    current_url,
                 )
+
+                break
+
+            visited_urls.add(
+                current_url,
+            )
+
+            logger.info(
+                "Downloading listing page %s",
+                current_url,
             )
 
             html = await self._downloader.download(
-                listing.url,
+                current_url,
             )
 
             records = await self._connector.crawl_listing(
                 html=html,
-                listing_url=listing.url,
-                state=listing.state,
-                city=listing.city,
-                category_slug=listing.taxonomy_slug,
+                listing_url=current_url,
+                state=initial_listing.state,
+                city=initial_listing.city,
+                category_slug=initial_listing.taxonomy_slug,
+            )
+
+            logger.info(
+                "Discovered %d companies from %s",
+                len(records),
+                current_url,
             )
 
             for record in records:
+
                 await self._repository.save(
                     record,
                 )
@@ -85,18 +108,22 @@ class ListingCrawlEngine:
                     record,
                 )
 
-            companies += len(
-                records,
-            )
-
+            companies += len(records)
             pages += 1
 
-            if not self._connector.has_next_page(
-                html,
-            ):
-                break
+            current_url = (
+                self._connector.next_page_url(
+                    html=html,
+                    current_url=current_url,
+                )
+            )
 
-            page += 1
+        logger.info(
+            "Listing crawl completed "
+            "(%d pages, %d discoveries)",
+            pages,
+            companies,
+        )
 
         return ListingCrawlResult(
             pages_crawled=pages,

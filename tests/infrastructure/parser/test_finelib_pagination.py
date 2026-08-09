@@ -6,7 +6,10 @@ from acios_discovery.infrastructure.connectors.finelib.listing_parser import (
 
 
 @pytest.mark.parametrize(
-    ("fixture_name", "expected"),
+    (
+        "fixture_name",
+        "expected",
+    ),
     [
         (
             "lagos_agriculture_service_page1",
@@ -18,7 +21,7 @@ from acios_discovery.infrastructure.connectors.finelib.listing_parser import (
         ),
     ],
 )
-def test_has_next_page(
+def test_next_page_url_exists(
     fixture_name: str,
     expected: bool,
     request: pytest.FixtureRequest,
@@ -30,12 +33,19 @@ def test_has_next_page(
 
     parser = FinelibParser()
 
-    assert (
-        parser.has_next_page(
-            html,
-        )
-        is expected
+    current_url = (
+        "https://www.finelib.com/"
+        "cities/lagos/agriculture"
     )
+
+    result = parser.next_page_url(
+        html,
+        current_url,
+    )
+
+    assert (
+        result is not None
+    ) is expected
 
 
 def test_next_page_url_returns_page_two(
@@ -44,11 +54,20 @@ def test_next_page_url_returns_page_two(
 
     parser = FinelibParser()
 
+    current_url = (
+        "https://www.finelib.com/"
+        "cities/lagos/agriculture"
+    )
+
     assert (
         parser.next_page_url(
             lagos_agriculture_service_page1,
+            current_url,
         )
-        == "https://www.finelib.com/cities/lagos/agriculture/page-2"
+        == (
+            "https://www.finelib.com/"
+            "cities/lagos/agriculture/page-2"
+        )
     )
 
 
@@ -58,9 +77,37 @@ def test_next_page_url_returns_none_on_last_page(
 
     parser = FinelibParser()
 
+    current_url = (
+        "https://www.finelib.com/"
+        "cities/lagos/agriculture/page-2"
+    )
+
     assert (
         parser.next_page_url(
             lagos_agriculture_service_page2,
+            current_url,
         )
         is None
+    )
+
+
+def test_next_page_url_resolves_relative_url(
+    lagos_agriculture_service_page1: str,
+) -> None:
+
+    parser = FinelibParser()
+
+    current_url = (
+        "https://www.finelib.com/"
+        "cities/lagos/agriculture"
+    )
+
+    result = parser.next_page_url(
+        lagos_agriculture_service_page1,
+        current_url,
+    )
+
+    assert result == (
+        "https://www.finelib.com/"
+        "cities/lagos/agriculture/page-2"
     )

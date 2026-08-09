@@ -23,18 +23,13 @@ from acios_discovery.domain.discovery.context import (
 from acios_discovery.domain.discovery.models import (
     RawDiscovery,
 )
-from acios_discovery.domain.repositories.discovery_repository import (
-    DiscoveryRepository,
-)
+from acios_discovery.domain.sources import Source
 from acios_discovery.infrastructure.connectors.finelib.connector import (
     FinelibConnector,
 )
-from acios_discovery.infrastructure.persistence.in_memory_discovery_repository import (
-    InMemoryDiscoveryRepository,
+from acios_discovery.infrastructure.connectors.finelib.url_slug_mapper import (
+    FinelibUrlSlugMapper,
 )
-
-repository = AsyncMock(spec=DiscoveryRepository)
-
 
 
 def make_record(
@@ -44,52 +39,63 @@ def make_record(
 
     return DiscoveryRecord(
         context=DiscoveryContext(
-            source="finelib",
+            source=Source.FINELIB,
             state="Lagos",
             city="Lagos",
             category="restaurants",
-            listing_url="https://example.com/listing",
+            listing_url=(
+                "https://example.com/listing"
+            ),
             page_number=1,
         ),
         company=RawDiscovery(
-            source="finelib",
+            source=Source.FINELIB,
             business_name=name,
-            detail_url="https://example.com/company",
+            detail_url=(
+                "https://example.com/company"
+            ),
         ),
     )
 
+
+def make_builder() -> ListingUrlBuilder:
+
+    return ListingUrlBuilder(
+        CategoryProvider(),
+        FinelibUrlSlugMapper(),
+    )
+
+
 @pytest.mark.asyncio
-async def test_engine_returns_result():
+async def test_engine_returns_result() -> None:
 
     downloader = AsyncMock()
 
-    downloader.download.return_value = "<html></html>"
+    downloader.download.return_value = (
+        "<html></html>"
+    )
 
-    connector = Mock(spec=FinelibConnector)
+    connector = Mock(
+        spec=FinelibConnector,
+    )
 
     connector.crawl_listing = AsyncMock(
         return_value=[],
     )
 
-    connector.has_next_page.return_value = False
+    connector.next_page_url.return_value = None
 
-    repository = Mock(
-        spec=InMemoryDiscoveryRepository,
-    )
-
-    builder = ListingUrlBuilder(
-        CategoryProvider(),
-    )
+    repository = Mock()
+    repository.save = AsyncMock()
 
     engine = ListingCrawlEngine(
         downloader=downloader,
         connector=connector,
         repository=repository,
-        url_builder=builder,
+        url_builder=make_builder(),
     )
 
     result = await engine.execute(
-
         CrawlPlan(
             state="Lagos",
             city="Lagos",
@@ -101,44 +107,64 @@ async def test_engine_returns_result():
 
     assert result.companies_discovered == 0
 
+    assert (
+        downloader.download.call_count
+        == 1
+    )
+
+    assert (
+        connector.crawl_listing.await_count
+        == 1
+    )
+
+    assert (
+        connector.next_page_url.call_count
+        == 1
+    )
+
 
 @pytest.mark.asyncio
-async def test_engine_saves_records():
+async def test_engine_saves_records() -> None:
 
     downloader = AsyncMock()
 
-    downloader.download.return_value = "<html></html>"
-
-    record = make_record()
-
-    connector = Mock(spec=FinelibConnector)
-
-    connector.crawl_listing = AsyncMock(
-        return_value=[
-            record,
-            record,
-            record,
-        ]
+    downloader.download.return_value = (
+        "<html></html>"
     )
 
-    connector.has_next_page.return_value = False
+    records = [
+        make_record(
+            name="Company 1",
+        ),
+        make_record(
+            name="Company 2",
+        ),
+        make_record(
+            name="Company 3",
+        ),
+    ]
+
+    connector = Mock(
+        spec=FinelibConnector,
+    )
+
+    connector.crawl_listing = AsyncMock(
+        return_value=records,
+    )
+
+    connector.next_page_url.return_value = None
 
     repository = Mock()
     repository.save = AsyncMock()
-
-    builder = ListingUrlBuilder(
-        CategoryProvider(),
-    )
 
     engine = ListingCrawlEngine(
         downloader=downloader,
         connector=connector,
         repository=repository,
-        url_builder=builder,
+        url_builder=make_builder(),
     )
 
     result = await engine.execute(
-
         CrawlPlan(
             state="Lagos",
             city="Lagos",
@@ -146,53 +172,71 @@ async def test_engine_saves_records():
         )
     )
 
-    assert repository.save.await_count == 3
+    assert (
+        repository.save.await_count
+        == 3
+    )
 
-    assert result.companies_discovered == 3
+    assert (
+        result.companies_discovered
+        == 3
+    )
+
+    assert result.pages_crawled == 1
 
 
 @pytest.mark.asyncio
-async def test_engine_handles_multiple_pages():
+async def test_engine_follows_connector_next_url() -> None:
 
     downloader = AsyncMock()
 
-    downloader.download.return_value = "<html></html>"
+    downloader.download.side_effect = [
+        "<page-1>",
+        "<page-2>",
+        "<page-3>",
+    ]
 
-    connector = Mock(spec=FinelibConnector)
+    connector = Mock(
+        spec=FinelibConnector,
+    )
 
     connector.crawl_listing = AsyncMock(
         side_effect=[
             [
-                make_record(name="Company 1"),
+                make_record(
+                    name="Company 1",
+                ),
             ],
             [
-                make_record(name="Company 2"),
-                make_record(name="Company 3"),
+                make_record(
+                    name="Company 2",
+                ),
             ],
-        ]
+            [
+                make_record(
+                    name="Company 3",
+                ),
+            ],
+        ],
     )
 
-    connector.has_next_page.side_effect = [
-        True,
-        False,
+    connector.next_page_url.side_effect = [
+        "https://example.com/page-2",
+        "https://example.com/page-3",
+        None,
     ]
 
     repository = Mock()
     repository.save = AsyncMock()
 
-    builder = ListingUrlBuilder(
-        CategoryProvider(),
-    )
-
     engine = ListingCrawlEngine(
         downloader=downloader,
         connector=connector,
         repository=repository,
-        url_builder=builder,
+        url_builder=make_builder(),
     )
 
     result = await engine.execute(
-
         CrawlPlan(
             state="Lagos",
             city="Lagos",
@@ -200,10 +244,133 @@ async def test_engine_handles_multiple_pages():
         )
     )
 
-    assert downloader.download.call_count == 2
+    assert result.pages_crawled == 3
 
-    assert repository.save.await_count == 3
+    assert result.companies_discovered == 3
+
+    assert (
+        downloader.download.call_count
+        == 3
+    )
+
+    assert (
+        repository.save.await_count
+        == 3
+    )
+
+    assert (
+        downloader.download.call_args_list[0]
+        .args[0]
+        .startswith(
+            "https://www.finelib.com/"
+        )
+    )
+
+    assert (
+        downloader.download.call_args_list[1]
+        .args[0]
+        == "https://example.com/page-2"
+    )
+
+    assert (
+        downloader.download.call_args_list[2]
+        .args[0]
+        == "https://example.com/page-3"
+    )
+
+
+@pytest.mark.asyncio
+async def test_engine_passes_current_url_to_next_page_parser() -> None:
+
+    downloader = AsyncMock()
+
+    downloader.download.return_value = (
+        "<html></html>"
+    )
+
+    connector = Mock(
+        spec=FinelibConnector,
+    )
+
+    connector.crawl_listing = AsyncMock(
+        return_value=[],
+    )
+
+    connector.next_page_url.return_value = None
+
+    repository = Mock()
+    repository.save = AsyncMock()
+
+    engine = ListingCrawlEngine(
+        downloader=downloader,
+        connector=connector,
+        repository=repository,
+        url_builder=make_builder(),
+    )
+
+    await engine.execute(
+        CrawlPlan(
+            state="Lagos",
+            city="Lagos",
+            category_slug="restaurants",
+        )
+    )
+
+    connector.next_page_url.assert_called_once()
+
+    call = connector.next_page_url.call_args
+
+    assert call.kwargs["html"] == (
+        "<html></html>"
+    )
+
+    assert call.kwargs["current_url"].startswith(
+        "https://www.finelib.com/"
+    )
+
+
+@pytest.mark.asyncio
+async def test_engine_stops_on_pagination_loop() -> None:
+
+    downloader = AsyncMock()
+
+    downloader.download.return_value = (
+        "<html></html>"
+    )
+
+    connector = Mock(
+        spec=FinelibConnector,
+    )
+
+    connector.crawl_listing = AsyncMock(
+        return_value=[],
+    )
+
+    connector.next_page_url.return_value = (
+        "https://example.com/page-2"
+    )
+
+    repository = Mock()
+    repository.save = AsyncMock()
+
+    engine = ListingCrawlEngine(
+        downloader=downloader,
+        connector=connector,
+        repository=repository,
+        url_builder=make_builder(),
+    )
+
+    result = await engine.execute(
+        CrawlPlan(
+            state="Lagos",
+            city="Lagos",
+            category_slug="restaurants",
+        )
+    )
 
     assert result.pages_crawled == 2
 
-    assert result.companies_discovered == 3
+    assert (
+        downloader.download.call_count
+        == 2
+    )

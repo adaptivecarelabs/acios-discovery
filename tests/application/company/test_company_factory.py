@@ -59,13 +59,13 @@ def test_factory_generates_new_ids():
     factory = CompanyFactory()
 
     first = factory.create(
-        1,
-        make_discovery(),
+        sequence=1,
+        discovery=make_discovery(),
     )
 
     second = factory.create(
-        2,
-        make_discovery(),
+        sequence=2,
+        discovery=make_discovery(),
     )
 
     assert first.id != second.id
@@ -76,8 +76,8 @@ def test_factory_keeps_original_name_as_alias():
     factory = CompanyFactory()
 
     company = factory.create(
-        10,
-        make_discovery(),
+        sequence=10,
+        discovery=make_discovery(),
     )
 
     assert "Drugstoc EHub Ltd" in company.aliases
@@ -88,8 +88,8 @@ def test_factory_canonicalizes_name():
     factory = CompanyFactory()
 
     company = factory.create(
-        1,
-        make_discovery(),
+        sequence=1,
+        discovery=make_discovery(),
     )
 
     assert company.canonical_name == "DRUGSTOC EHUB"

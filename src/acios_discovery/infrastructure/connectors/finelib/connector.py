@@ -5,7 +5,6 @@ from acios_discovery.domain.crawling.job import CrawlJob
 from acios_discovery.domain.discovery import (
     DiscoveryContext,
     DiscoveryRecord,
-    RawDiscovery,
 )
 from acios_discovery.domain.sources import Source
 from acios_discovery.domain.taxonomy import FINELIB_CATEGORY_MAP
@@ -16,10 +15,10 @@ from .listing_parser import FinelibParser
 
 class FinelibConnector(BaseConnector):
     """
-    Parses a Finelib listing page into DiscoveryRecord objects.
+    Parses Finelib listing pages into DiscoveryRecord objects.
 
-    This connector is responsible ONLY for discovering businesses
-    from listing pages.
+    This connector is responsible ONLY for discovering
+    businesses from listing pages.
 
     It does NOT enrich businesses from their detail pages.
     """
@@ -41,9 +40,9 @@ class FinelibConnector(BaseConnector):
         self,
         job: CrawlJob,
     ) -> list[DiscoveryRecord]:
-
         raise NotImplementedError(
-            "The application worker is responsible for downloading listing pages."
+            "The application worker is responsible "
+            "for downloading listing pages."
         )
 
     async def crawl_listing(
@@ -56,7 +55,9 @@ class FinelibConnector(BaseConnector):
         category_slug: str,
     ) -> list[DiscoveryRecord]:
 
-        taxonomy = FINELIB_CATEGORY_MAP[category_slug]
+        taxonomy = FINELIB_CATEGORY_MAP[
+            category_slug
+        ]
 
         cards = self._parser.find_business_cards(
             html,
@@ -68,23 +69,8 @@ class FinelibConnector(BaseConnector):
 
         for card in cards:
 
-            company = RawDiscovery(
-                source=Source.FINELIB,
-                business_name=self._mapper.extract_business_name(
-                    card
-                ),
-                detail_url=self._mapper.extract_detail_url(
-                    card
-                ),
-                address=self._mapper.extract_address(
-                    card
-                ),
-                phone_numbers=self._mapper.extract_phone_numbers(
-                    card
-                ),
-                description=self._mapper.extract_description(
-                    card
-                ),
+            company = self._mapper.map(
+                card,
             )
 
             context = DiscoveryContext(
@@ -108,27 +94,19 @@ class FinelibConnector(BaseConnector):
 
         return discoveries
 
-
-    def has_next_page(
-        self,
-        html: str,
-    ) -> bool:
-
-        return self._parser.has_next_page(
-            html,
-        )
-
-
     def next_page_url(
         self,
         html: str,
+        current_url: str,
     ) -> str | None:
         """
-        Returns the next listing page URL.
+        Return the absolute URL of the next
+        Finelib listing page.
 
-        Returns None when the current page is the last page.
+        Returns None when there is no next page.
         """
 
         return self._parser.next_page_url(
-            html,
+            html=html,
+            current_url=current_url,
         )

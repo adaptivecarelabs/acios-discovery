@@ -16,6 +16,13 @@ class DiscoveryRepository(ABC):
         ...
 
     @abstractmethod
+    async def update(
+        self,
+        record: DiscoveryRecord,
+    ) -> None:
+        ...
+
+    @abstractmethod
     async def exists(
         self,
         record: DiscoveryRecord,

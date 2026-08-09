@@ -18,6 +18,9 @@ from acios_discovery.application.planning.models import (
 from acios_discovery.application.planning.providers.category_provider import (
     CategoryProvider,
 )
+from acios_discovery.infrastructure.connectors.finelib.url_slug_mapper import (
+    FinelibUrlSlugMapper,
+)
 from acios_discovery.infrastructure.queue.in_memory_job_queue import (
     InMemoryJobQueue,
 )
@@ -34,6 +37,7 @@ async def test_pipeline_schedules_jobs():
 
     builder = ListingUrlBuilder(
         taxonomy=CategoryProvider(),
+        slug_mapper=FinelibUrlSlugMapper(),
     )
 
     factory = CrawlJobFactory()

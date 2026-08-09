@@ -11,7 +11,7 @@ from acios_discovery.application.enrichment.finelib_enricher import (
 from acios_discovery.domain.discovery.context import DiscoveryContext
 from acios_discovery.domain.discovery.models import RawDiscovery
 from acios_discovery.domain.discovery.record import DiscoveryRecord
-from acios_discovery.domain.repositories.discovery_repository import (
+from acios_discovery.domain.discovery.repository import (
     DiscoveryRepository,
 )
 from acios_discovery.domain.sources import Source

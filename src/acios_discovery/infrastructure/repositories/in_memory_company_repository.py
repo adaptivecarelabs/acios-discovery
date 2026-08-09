@@ -176,6 +176,10 @@ class InMemoryCompanyRepository(
             company.id
         ] = company
 
+        self._index_company(
+            company,
+        )
+
 
     async def find_by_name(
         self,
@@ -215,6 +219,26 @@ class InMemoryCompanyRepository(
             )
 
         return None
+
+
+    async def find_by_alias(
+        self,
+        alias: str,
+    ) -> Company | None:
+        normalized = self._normalizer.normalize(
+            alias,
+        )
+
+        company_id = self._alias_index.get(
+            normalized,
+        )
+
+        if company_id is None:
+            return None
+
+        return self._companies.get(
+            company_id,
+        )
 
     async def find_by_phone(
         self,

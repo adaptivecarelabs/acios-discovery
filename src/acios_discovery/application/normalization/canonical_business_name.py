@@ -29,6 +29,21 @@ class CanonicalBusinessNameNormalizer:
         r"\bCORP\b",
         r"\bCO\.?\b",
         r"\bCOMPANY\b",
+        r"\bVENTURES\b",
+        r"\bENTERPRISES\b",
+        r"\bCONCEPT\b",
+        r"\bSERVICES\b",
+        r"\bSTORES\b",
+        r"\bLP\b",
+        r"\bUNLIMITED\b",
+        r"\bULTD\b",
+        r"\bLLP\b",
+        r"\bFOUNDATION\b",
+        r"\bASSOCIATION\b",
+        r"\bCHURCH\b",
+        r"\bCLUB\b",
+        r"\bSOCIETY\b",
+        r"\bLTD/GTE\b",
     )
 
     def normalize(

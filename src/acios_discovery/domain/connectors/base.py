@@ -16,10 +16,13 @@ class BaseConnector(ABC):
         """
 
     @abstractmethod
-    def has_next_page(
+    def next_page_url(
         self,
         html: str,
-    ) -> bool:
+        current_url: str,
+    ) -> str | None:
         """
-        Returns True if another listing page exists.
+        Return the absolute URL of the next listing page.
+
+        Returns None when the current page is the last page.
         """

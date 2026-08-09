@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup, Tag
 
+from acios_discovery.domain.discovery.models import RawDiscovery
+
 
 class FinelibDetailMapper:
 
@@ -260,3 +262,33 @@ class FinelibDetailMapper:
             if payment.strip()
         ]
 
+
+    def enrich(
+        self,
+        company: RawDiscovery,
+        soup: BeautifulSoup,
+    ) -> RawDiscovery:
+
+        company.email = self.extract_email(soup)
+
+        company.website = self.extract_website(soup)
+
+        company.social_links = self.extract_social_links(soup)
+
+        company.year_founded = self.extract_year_founded(soup)
+
+        company.employee_count = self.extract_employee_count(soup)
+
+        company.business_locations = (
+            self.extract_business_locations(soup)
+        )
+
+        company.product_types = (
+            self.extract_product_types(soup)
+        )
+
+        company.payment_methods = (
+            self.extract_payment_methods(soup)
+        )
+
+        return company

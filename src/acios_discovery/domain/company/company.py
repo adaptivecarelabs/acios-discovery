@@ -3,23 +3,28 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from acios_discovery.domain.company.company_id import (
-    CompanyId,
-)
+from acios_discovery.domain.company.company_id import CompanyId
+from acios_discovery.domain.discovery.models import RawDiscovery
 
 
 @dataclass(slots=True)
 class Company:
     """
-    Master representation of a business.
+    Canonical Company Aggregate.
 
-    Multiple discoveries from different
-    sources resolve into one Company.
+    This represents the master company registry.
+
+    Multiple RawDiscoveries from one or more sources
+    are merged into a single Company.
     """
 
     id: CompanyId
 
     canonical_name: str
+
+    #
+    # Identity
+    #
 
     aliases: set[str] = field(default_factory=set)
 
@@ -31,6 +36,10 @@ class Company:
 
     addresses: set[str] = field(default_factory=set)
 
+    #
+    # Classification
+    #
+
     categories: set[str] = field(default_factory=set)
 
     cities: set[str] = field(default_factory=set)
@@ -39,12 +48,32 @@ class Company:
 
     sources: set[str] = field(default_factory=set)
 
+    #
+    # Enrichment
+    #
+
+    social_links: dict[str, str] = field(default_factory=dict)
+
+    product_types: set[str] = field(default_factory=set)
+
+    payment_methods: set[str] = field(default_factory=set)
+
+    year_founded: int | None = None
+
+    employee_count: str | None = None
+
+    business_locations: int | None = None
+
+    #
+    # Metadata
+    #
+
     first_seen: datetime = field(
-        default_factory=lambda: datetime.now(UTC),
+        default_factory=lambda: datetime.now(UTC)
     )
 
     last_seen: datetime = field(
-        default_factory=lambda: datetime.now(UTC),
+        default_factory=lambda: datetime.now(UTC)
     )
 
     confidence: float = 100.0
@@ -52,76 +81,104 @@ class Company:
     active: bool = True
 
     def touch(self) -> None:
+        self.last_seen = datetime.now(UTC)
+
+    def add_alias(self, value: str | None) -> None:
+        if value:
+            self.aliases.add(value.strip())
+
+    def add_phone(self, value: str | None) -> None:
+        if value:
+            self.phone_numbers.add(value)
+
+    def add_email(self, value: str | None) -> None:
+        if value:
+            self.emails.add(value)
+
+    def add_website(self, value: str | None) -> None:
+        if value:
+            self.websites.add(value)
+
+    def add_address(self, value: str | None) -> None:
+        if value:
+            self.addresses.add(value)
+
+    def add_source(self, value: str | None) -> None:
+        if value:
+            self.sources.add(value)
+
+    def merge_discovery(
+        self,
+        discovery: RawDiscovery,
+    ) -> None:
         """
-        Updates the last_seen timestamp.
+        Merge information from a new discovery
+        into the canonical company aggregate.
         """
 
-        self.last_seen = datetime.now(
-            UTC,
+        self.add_alias(
+            discovery.business_name,
         )
 
-    def add_alias(
-        self,
-        value: str,
-    ) -> None:
+        for phone in discovery.phone_numbers:
+            self.add_phone(phone)
 
-        if value.strip():
+        self.add_email(
+            discovery.email,
+        )
 
-            self.aliases.add(
-                value.strip(),
+        self.add_website(
+            discovery.website,
+        )
+
+        self.add_address(
+            discovery.address,
+        )
+
+        if discovery.category:
+            self.categories.add(
+                discovery.category,
             )
 
-    def add_phone(
-        self,
-        value: str | None,
-    ) -> None:
-
-        if value:
-
-            self.phone_numbers.add(
-                value,
+        if discovery.city:
+            self.cities.add(
+                discovery.city,
             )
 
-    def add_email(
-        self,
-        value: str | None,
-    ) -> None:
-
-        if value:
-
-            self.emails.add(
-                value,
+        if discovery.state:
+            self.states.add(
+                discovery.state,
             )
 
-    def add_website(
-        self,
-        value: str | None,
-    ) -> None:
+        self.add_source(
+            discovery.source,
+        )
 
-        if value:
+        self.social_links.update(
+            discovery.social_links,
+        )
 
-            self.websites.add(
-                value,
+        self.product_types.update(
+            discovery.product_types,
+        )
+
+        self.payment_methods.update(
+            discovery.payment_methods,
+        )
+
+        if discovery.year_founded is not None:
+            self.year_founded = (
+                discovery.year_founded
             )
 
-    def add_address(
-        self,
-        value: str | None,
-    ) -> None:
-
-        if value:
-
-            self.addresses.add(
-                value,
+        if discovery.employee_count is not None:
+            self.employee_count = (
+                discovery.employee_count
             )
 
-    def add_source(
-        self,
-        value: str,
-    ) -> None:
-
-        if value:
-
-            self.sources.add(
-                value,
+        if discovery.business_locations is not None:
+            self.business_locations = (
+                discovery.business_locations
             )
+
+        self.touch()

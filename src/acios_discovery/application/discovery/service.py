@@ -99,6 +99,7 @@ class DiscoveryService:
             current_url = (
                 self._connector.next_page_url(
                     listing_html,
+                    current_url,
                 )
             )
 

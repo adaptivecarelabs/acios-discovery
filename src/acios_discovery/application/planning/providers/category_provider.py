@@ -11,9 +11,7 @@ class CategoryProvider:
     Provides access to the Finelib taxonomy registry.
     """
 
-    def categories(
-        self,
-    ) -> list[str]:
+    def categories(self) -> list[str]:
         return sorted(
             FINELIB_CATEGORY_MAP.keys()
         )
@@ -29,3 +27,37 @@ class CategoryProvider:
         slug: str,
     ) -> bool:
         return slug in FINELIB_CATEGORY_MAP
+
+    #
+    # NEW
+    #
+
+    def first(self) -> str:
+        """
+        Returns the first registered category slug.
+        """
+        return self.categories()[0]
+
+    def require(
+        self,
+        slug: str,
+    ) -> str:
+        """
+        Validate that a category exists.
+
+        Raises a descriptive error instead of KeyError.
+        """
+
+        if not self.has_category(
+            slug,
+        ):
+            available = ", ".join(
+                self.categories(),
+            )
+
+            raise ValueError(
+                f"Unknown category '{slug}'. "
+                f"Available categories: {available}"
+            )
+
+        return slug

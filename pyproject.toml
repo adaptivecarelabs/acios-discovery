@@ -17,6 +17,8 @@ dependencies = [
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.16.0",
+    "alembic>=1.19.1",
+    "psycopg2-binary>=2.9.12",
 ]
 
 [build-system]

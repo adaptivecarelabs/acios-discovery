@@ -7,12 +7,16 @@ from acios_discovery.application.planning.models import (
 from acios_discovery.application.planning.providers.category_provider import (
     CategoryProvider,
 )
+from acios_discovery.infrastructure.connectors.finelib.url_slug_mapper import (
+    FinelibUrlSlugMapper,
+)
 
 
 def test_build_food_url():
 
     builder = ListingUrlBuilder(
-        CategoryProvider()
+        CategoryProvider(),
+        FinelibUrlSlugMapper(),
     )
 
     listing = builder.build(
@@ -25,14 +29,15 @@ def test_build_food_url():
     )
 
     assert listing.url.endswith(
-        "/cities/lagos/food"
+        "/cities/lagos/business/food"
     )
 
 
 def test_build_restaurants_url():
 
     builder = ListingUrlBuilder(
-        CategoryProvider()
+        CategoryProvider(),
+        FinelibUrlSlugMapper(),
     )
 
     listing = builder.build(
@@ -52,7 +57,8 @@ def test_build_restaurants_url():
 def test_build_second_page():
 
     builder = ListingUrlBuilder(
-        CategoryProvider()
+        CategoryProvider(),
+        FinelibUrlSlugMapper(),
     )
 
     listing = builder.build(
@@ -66,5 +72,5 @@ def test_build_second_page():
     )
 
     assert listing.url.endswith(
-        "/cities/lagos/business/food/restaurants?page=2"
+        "/cities/lagos/business/food/restaurants/page-2"
     )

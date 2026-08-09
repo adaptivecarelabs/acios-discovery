@@ -44,14 +44,23 @@ class EntityResolutionService:
                 company,
             )
 
+            print(
+                f"{discovery.business_name:<45}"
+                f" -> "
+                f"{company.canonical_name:<45}"
+                f" = {score:.2f}"
+            )
+
             if score > best_score:
 
                 best_score = score
 
                 best_company = company
 
+        duplicate = best_score >= 80.0            
+
         return ResolutionResult(
             company=best_company,
             confidence=best_score,
-            duplicate=best_score >= 80.0,
+            duplicate=duplicate,
         )

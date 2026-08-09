@@ -8,54 +8,55 @@ from acios_discovery.application.planning.providers.category_provider import (
     CategoryProvider,
 )
 from acios_discovery.domain.sources import Source
+from acios_discovery.infrastructure.connectors.finelib.url_slug_mapper import (
+    FinelibUrlSlugMapper,
+)
 
 BASE = "https://www.finelib.com"
 
 
 class ListingUrlBuilder:
+    """
+    Builds canonical Finelib listing URLs.
+
+    Taxonomy metadata describes the business classification.
+    FinelibUrlSlugMapper describes how that classification is represented
+    in Finelib's URL structure.
+    """
 
     def __init__(
         self,
         taxonomy: CategoryProvider,
+        slug_mapper: FinelibUrlSlugMapper,
     ) -> None:
-
         self._taxonomy = taxonomy
+        self._slug_mapper = slug_mapper
 
     def build(
         self,
         plan: CrawlPlan,
     ) -> ListingUrl:
-
-        taxonomy = self._taxonomy.taxonomy(
-            plan.category_slug
+        self._taxonomy.require(
+            plan.category_slug,
         )
 
-        city = plan.city.lower().replace(
+        path = self._slug_mapper.listing_path(
+            plan.category_slug,
+        )
+
+        city = plan.city.strip().lower().replace(
             " ",
-            "-"
+            "-",
         )
 
-        if taxonomy.subcategory:
-
-            url = (
-                f"{BASE}/cities/"
-                f"{city}/"
-                f"{taxonomy.root}/"
-                f"{taxonomy.category.lower().replace(' ','-')}/"
-                f"{plan.category_slug}"
-            )
-
-        else:
-
-            url = (
-                f"{BASE}/cities/"
-                f"{city}/"
-                f"{plan.category_slug}"
-            )
+        url = (
+            f"{BASE}/cities/"
+            f"{city}/"
+            f"{path}"
+        )
 
         if plan.page > 1:
-
-            url += f"?page={plan.page}"
+            url += f"/page-{plan.page}"
 
         return ListingUrl(
             source=Source.FINELIB,
