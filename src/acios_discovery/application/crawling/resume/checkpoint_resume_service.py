@@ -3,7 +3,7 @@ from __future__ import annotations
 from acios_discovery.domain.crawling.crawl_checkpoint import (
     CrawlCheckpoint,
 )
-from acios_discovery.domain.crawling.crawl_checkpoint_repository import (
+from acios_discovery.domain.repositories.crawl_checkpoint_repository import (
     CrawlCheckpointRepository,
 )
 

@@ -2,6 +2,12 @@ from __future__ import annotations
 
 import asyncio
 
+from acios_discovery.application.crawling.crawl_worker import (
+    CrawlWorker,
+)
+from acios_discovery.application.crawling.crawl_worker_factory import (
+    CrawlWorkerFactory,
+)
 from acios_discovery.application.crawling.worker_pool_result import (
     WorkerPoolResult,
 )
@@ -14,6 +20,7 @@ from acios_discovery.application.events.in_memory_event_publisher import (
 from acios_discovery.application.metrics.crawl_metrics_service import (
     CrawlMetricsService,
 )
+from acios_discovery.domain.crawling import CrawlJob
 from acios_discovery.domain.events.company_discovered_event import (
     CompanyDiscoveredEvent,
 )
@@ -38,7 +45,7 @@ class ConcurrentWorkerPool:
         self,
         *,
         queue: JobQueue,
-        worker_factory,
+        worker_factory: CrawlWorkerFactory,
         metrics: CrawlMetricsService,
         publisher: InMemoryEventPublisher,
         workers: int = 4,
@@ -58,7 +65,7 @@ class ConcurrentWorkerPool:
         lock = asyncio.Lock()
 
         async def run_worker() -> None:
-            worker = self._worker_factory()
+            worker: CrawlWorker = self._worker_factory()
 
             while True:
                 job = await self._queue.dequeue()
@@ -90,7 +97,6 @@ class ConcurrentWorkerPool:
                 except Exception:
                     async with lock:
                         result.jobs_failed += 1
-                        
 
         await asyncio.gather(
             *[
@@ -106,7 +112,7 @@ class ConcurrentWorkerPool:
     async def _publish_crawl_events(
         self,
         *,
-        job,
+        job: CrawlJob,
         crawl_result: ListingCrawlResult,
     ) -> None:
         await self._publisher.publish(

@@ -21,7 +21,6 @@ class CrawlSupervisor:
         worker_pool,
         metrics: CrawlMetricsService,
     ) -> None:
-
         self._session = session
         self._worker_pool = worker_pool
         self._metrics = metrics
@@ -30,16 +29,42 @@ class CrawlSupervisor:
         self,
     ) -> CrawlSupervisorResult:
 
-        worker_result = await self._worker_pool.execute()
+        self._session.start()
 
-        snapshot = self._metrics.runtime_snapshot(
-            workers=worker_result.workers,
-        )
+        try:
+            worker_result = await self._worker_pool.execute()
 
-        return CrawlSupervisorResult(
-            session_id=self._session.id,
-            workers=snapshot.workers,
-            jobs_processed=snapshot.jobs_processed,
-            pages_crawled=snapshot.pages_crawled,
-            companies_discovered=snapshot.companies_discovered,
-        )
+            self._session.jobs_completed = (
+                worker_result.jobs_processed
+            )
+
+            self._session.jobs_failed = (
+                worker_result.jobs_failed
+            )
+
+            self._session.pages_crawled = (
+                worker_result.pages_crawled
+            )
+
+            self._session.companies_discovered = (
+                worker_result.companies_discovered
+            )
+
+            if worker_result.completed:
+                self._session.complete()
+            else:
+                self._session.fail()
+
+            return CrawlSupervisorResult(
+                session_id=self._session.id,
+                workers=worker_result.workers,
+                jobs_processed=worker_result.jobs_processed,
+                pages_crawled=worker_result.pages_crawled,
+                companies_discovered=(
+                    worker_result.companies_discovered
+                ),
+            )
+
+        except Exception:
+            self._session.fail()
+            raise

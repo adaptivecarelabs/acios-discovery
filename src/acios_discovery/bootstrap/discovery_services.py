@@ -1,7 +1,11 @@
 from __future__ import annotations
 
-from acios_discovery.application.company.company_factory import CompanyFactory
-from acios_discovery.application.company.company_merge_service import CompanyMergeService
+from acios_discovery.application.company.company_factory import (
+    CompanyFactory,
+)
+from acios_discovery.application.company.company_merge_service import (
+    CompanyMergeService,
+)
 from acios_discovery.application.company.discovery_company_registry_service import (
     DiscoveryCompanyRegistryService,
 )
@@ -50,8 +54,12 @@ from acios_discovery.infrastructure.connectors.finelib.listing_mapper import (
 from acios_discovery.infrastructure.connectors.finelib.listing_parser import (
     FinelibParser,
 )
-from acios_discovery.infrastructure.connectors.finelib.url_slug_mapper import FinelibUrlSlugMapper
-from acios_discovery.infrastructure.http.httpx_client import HttpxClient
+from acios_discovery.infrastructure.connectors.finelib.url_slug_mapper import (
+    FinelibUrlSlugMapper,
+)
+from acios_discovery.infrastructure.http.httpx_client import (
+    HttpxClient,
+)
 from acios_discovery.infrastructure.persistence.in_memory_discovery_repository import (
     InMemoryDiscoveryRepository,
 )
@@ -59,14 +67,29 @@ from acios_discovery.infrastructure.repositories.in_memory_company_repository im
     InMemoryCompanyRepository,
 )
 
+from .crawling_services import CrawlingServices
+
 
 class DiscoveryServices:
+    """
+    Composition root for the discovery subsystem.
 
-    def __init__(self) -> None:
+    This class wires discovery infrastructure and application
+    services together.
 
+    It contains no business logic.
+    """
+
+    def __init__(
+        self,
+        *,
+        workers: int = 4,
+    ) -> None:
         self.http = HttpxClient()
 
-        self.company_repository = InMemoryCompanyRepository()
+        self.company_repository = (
+            InMemoryCompanyRepository()
+        )
 
         self.discovery_repository = (
             InMemoryDiscoveryRepository()
@@ -82,9 +105,10 @@ class DiscoveryServices:
         )
 
         self.category_provider = CategoryProvider()
+
         self.url_builder = ListingUrlBuilder(
-            taxonomy = self.category_provider,
-            slug_mapper=FinelibUrlSlugMapper()
+            taxonomy=self.category_provider,
+            slug_mapper=FinelibUrlSlugMapper(),
         )
 
         self.crawl_engine = ListingCrawlEngine(
@@ -105,28 +129,42 @@ class DiscoveryServices:
             repository=self.discovery_repository,
         )
 
-        self.resolution_engine = EntityResolutionEngine()
+        self.resolution_engine = (
+            EntityResolutionEngine()
+        )
 
-        self.resolution_service = EntityResolutionService(
-            repository=self.company_repository,
-            engine=self.resolution_engine,
+        self.resolution_service = (
+            EntityResolutionService(
+                repository=self.company_repository,
+                engine=self.resolution_engine,
+            )
         )
 
         self.factory = CompanyFactory()
 
         self.merge_service = CompanyMergeService()
 
-        self.registry = DiscoveryCompanyRegistryService(
-            repository=self.company_repository,
-            resolution_service=self.resolution_service,
-            factory=self.factory,
-            merge_service=self.merge_service,
+        self.registry = (
+            DiscoveryCompanyRegistryService(
+                repository=self.company_repository,
+                resolution_service=self.resolution_service,
+                factory=self.factory,
+                merge_service=self.merge_service,
+            )
         )
 
         self.processor = DiscoveryProcessor(
             registry_service=self.registry,
         )
 
-        self.batch_processor = DiscoveryBatchProcessor(
-            processor=self.processor,
+        self.batch_processor = (
+            DiscoveryBatchProcessor(
+                processor=self.processor,
+            )
+        )
+
+        self.crawling = CrawlingServices(
+            crawl_engine=self.crawl_engine,
+            listing_builder=self.url_builder,
+            workers=workers,
         )

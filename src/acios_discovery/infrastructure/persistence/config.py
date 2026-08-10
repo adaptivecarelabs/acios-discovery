@@ -1,12 +1,21 @@
+from __future__ import annotations
+
 import os
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
 
-if not DATABASE_URL:
-    raise RuntimeError(
-        "DATABASE_URL must be set before starting the application."
-    )
+def _require_database_url() -> str:
+    value = os.getenv("DATABASE_URL")
+
+    if not value:
+        raise RuntimeError(
+            "DATABASE_URL must be set before starting the application."
+        )
+
+    return value
+
+
+DATABASE_URL: str = _require_database_url()

@@ -9,8 +9,8 @@ from acios_discovery.domain.crawling import CrawlJob
 
 class CrawlJobFactory:
     """
-    Creates executable crawl jobs from crawl plans and
-    generated listing URLs.
+    Creates executable crawl jobs from crawl plans
+    and generated listing URLs.
     """
 
     def create(
@@ -19,7 +19,6 @@ class CrawlJobFactory:
         plan: CrawlPlan,
         listing: ListingUrl,
     ) -> CrawlJob:
-
         return CrawlJob(
             source=listing.source,
             listing_url=listing.url,

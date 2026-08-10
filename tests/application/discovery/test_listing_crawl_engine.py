@@ -8,12 +8,10 @@ from acios_discovery.application.discovery import (
 from acios_discovery.application.planning.builders.listing_url_builder import (
     ListingUrlBuilder,
 )
-from acios_discovery.application.planning.models import (
-    CrawlPlan,
-)
 from acios_discovery.application.planning.providers.category_provider import (
     CategoryProvider,
 )
+from acios_discovery.domain.crawling import CrawlJob
 from acios_discovery.domain.discovery import (
     DiscoveryRecord,
 )
@@ -96,7 +94,9 @@ async def test_engine_returns_result() -> None:
     )
 
     result = await engine.execute(
-        CrawlPlan(
+        CrawlJob(
+            source=Source.FINELIB,
+            listing_url="https://example.com",
             state="Lagos",
             city="Lagos",
             category_slug="restaurants",
@@ -165,7 +165,9 @@ async def test_engine_saves_records() -> None:
     )
 
     result = await engine.execute(
-        CrawlPlan(
+        CrawlJob(
+            source=Source.FINELIB,
+            listing_url="https://example.com",
             state="Lagos",
             city="Lagos",
             category_slug="restaurants",
@@ -237,7 +239,9 @@ async def test_engine_follows_connector_next_url() -> None:
     )
 
     result = await engine.execute(
-        CrawlPlan(
+        CrawlJob(
+            source=Source.FINELIB,
+            listing_url="https://example.com",
             state="Lagos",
             city="Lagos",
             category_slug="restaurants",
@@ -309,7 +313,9 @@ async def test_engine_passes_current_url_to_next_page_parser() -> None:
     )
 
     await engine.execute(
-        CrawlPlan(
+       CrawlJob(
+            source=Source.FINELIB,
+            listing_url="https://example.com",
             state="Lagos",
             city="Lagos",
             category_slug="restaurants",
@@ -361,7 +367,9 @@ async def test_engine_stops_on_pagination_loop() -> None:
     )
 
     result = await engine.execute(
-        CrawlPlan(
+        CrawlJob(
+            source=Source.FINELIB,
+            listing_url="https://example.com",
             state="Lagos",
             city="Lagos",
             category_slug="restaurants",
@@ -373,4 +381,52 @@ async def test_engine_stops_on_pagination_loop() -> None:
     assert (
         downloader.download.call_count
         == 2
+    )
+
+
+@pytest.mark.asyncio
+async def test_engine_starts_from_job_page() -> None:
+    downloader = AsyncMock()
+
+    downloader.download.return_value = (
+        "<html></html>"
+    )
+
+    connector = Mock(
+        spec=FinelibConnector,
+    )
+
+    connector.crawl_listing = AsyncMock(
+        return_value=[],
+    )
+
+    connector.next_page_url.return_value = None
+
+    repository = Mock()
+    repository.save = AsyncMock()
+
+    engine = ListingCrawlEngine(
+        downloader=downloader,
+        connector=connector,
+        repository=repository,
+        url_builder=make_builder(),
+    )
+
+    await engine.execute(
+        CrawlJob(
+            source=Source.FINELIB,
+            listing_url="https://example.com",
+            state="Lagos",
+            city="Lagos",
+            category_slug="restaurants",
+            page=7,
+        )
+    )
+
+    requested_url = (
+        downloader.download.call_args.args[0]
+    )
+
+    assert requested_url.endswith(
+        "/page-7"
     )

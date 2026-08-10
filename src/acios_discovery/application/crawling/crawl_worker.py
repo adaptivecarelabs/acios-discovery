@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from acios_discovery.application.discovery.listing_crawl_engine import (
+    ListingCrawlEngine,
+)
 from acios_discovery.application.discovery.listing_crawl_result import (
     ListingCrawlResult,
 )
@@ -14,7 +17,7 @@ class CrawlWorker:
     def __init__(
         self,
         *,
-        engine,
+        engine: ListingCrawlEngine,
     ) -> None:
         self._engine = engine
 

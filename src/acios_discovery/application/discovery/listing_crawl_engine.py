@@ -9,9 +9,8 @@ from acios_discovery.application.discovery.listing_downloader import (
 from acios_discovery.application.planning.builders.listing_url_builder import (
     ListingUrlBuilder,
 )
-from acios_discovery.application.planning.models import (
-    CrawlPlan,
-)
+from acios_discovery.application.planning.models import CrawlPlan
+from acios_discovery.domain.crawling import CrawlJob
 from acios_discovery.domain.discovery.repository import (
     DiscoveryRepository,
 )
@@ -23,9 +22,11 @@ from acios_discovery.shared.logging import logger
 
 class ListingCrawlEngine:
     """
-    Downloads every page belonging to a listing,
-    parses all companies,
-    and persists them.
+    Executes one CrawlJob.
+
+    The engine operates at execution time. It receives a CrawlJob,
+    reconstructs the corresponding listing URL, crawls the listing
+    pages, persists discovered records, and returns crawl statistics.
     """
 
     def __init__(
@@ -36,7 +37,6 @@ class ListingCrawlEngine:
         repository: DiscoveryRepository,
         url_builder: ListingUrlBuilder,
     ) -> None:
-
         self._downloader = downloader
         self._connector = connector
         self._repository = repository
@@ -44,14 +44,21 @@ class ListingCrawlEngine:
 
     async def execute(
         self,
-        plan: CrawlPlan,
+        job: CrawlJob,
     ) -> ListingCrawlResult:
+
+        plan = CrawlPlan(
+            state=job.state,
+            city=job.city,
+            category_slug=job.category_slug,
+            page=job.page,
+        )
 
         initial_listing = self._url_builder.build(
             plan,
         )
 
-        current_url = initial_listing.url
+        current_url: str | None  = initial_listing.url
 
         pages = 0
         companies = 0
@@ -63,17 +70,13 @@ class ListingCrawlEngine:
         while current_url is not None:
 
             if current_url in visited_urls:
-
                 logger.warning(
                     "Pagination loop detected at %s",
                     current_url,
                 )
-
                 break
 
-            visited_urls.add(
-                current_url,
-            )
+            visited_urls.add(current_url)
 
             logger.info(
                 "Downloading listing page %s",
@@ -87,9 +90,9 @@ class ListingCrawlEngine:
             records = await self._connector.crawl_listing(
                 html=html,
                 listing_url=current_url,
-                state=initial_listing.state,
-                city=initial_listing.city,
-                category_slug=initial_listing.taxonomy_slug,
+                state=job.state,
+                city=job.city,
+                category_slug=job.category_slug,
             )
 
             logger.info(
@@ -99,23 +102,15 @@ class ListingCrawlEngine:
             )
 
             for record in records:
-
-                await self._repository.save(
-                    record,
-                )
-
-                all_records.append(
-                    record,
-                )
+                await self._repository.save(record)
+                all_records.append(record)
 
             companies += len(records)
             pages += 1
 
-            current_url = (
-                self._connector.next_page_url(
-                    html=html,
-                    current_url=current_url,
-                )
+            current_url = self._connector.next_page_url(
+                html=html,
+                current_url=current_url,
             )
 
         logger.info(

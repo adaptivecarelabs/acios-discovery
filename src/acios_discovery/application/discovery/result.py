@@ -9,7 +9,9 @@ class DiscoveryRunResult:
     Result of processing one complete discovery crawl job.
 
     This is the application-level result consumed by
-    CrawlWorker, CrawlExecutor, and ConcurrentWorkerPool.
+    CrawlWorker
+    and ConcurrentWorkerPool.
+    
     """
 
     source: str

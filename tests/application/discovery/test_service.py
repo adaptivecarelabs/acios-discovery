@@ -1,11 +1,12 @@
 from dataclasses import replace
 
 import pytest
-from acios_discovery.domain.sources import Source
+
 from acios_discovery.application.discovery.service import (
     DiscoveryService,
 )
 from acios_discovery.domain.crawling.job import CrawlJob
+from acios_discovery.domain.sources import Source
 from acios_discovery.infrastructure.persistence.in_memory_discovery_repository import (
     InMemoryDiscoveryRepository,
 )
