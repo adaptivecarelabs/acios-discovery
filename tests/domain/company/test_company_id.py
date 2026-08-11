@@ -13,7 +13,7 @@ def test_from_sequence():
 
     assert str(
         identifier,
-    ) == "COMP-00000001"
+    ) == "ACL-COM-00000001"
 
 
 def test_large_sequence():
@@ -24,16 +24,16 @@ def test_large_sequence():
 
     assert str(
         identifier,
-    ) == "COMP-00000152"
+    ) == "ACL-COM-00000152"
 
 
 def test_parse():
 
     identifier = CompanyId.parse(
-        "COMP-00000045",
+        "ACL-COM-00000045",
     )
 
-    assert identifier.value == "COMP-00000045"
+    assert identifier.value == "ACL-COM-00000045"
 
 
 def test_invalid_parse():

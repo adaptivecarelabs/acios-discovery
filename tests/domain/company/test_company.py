@@ -15,7 +15,7 @@ def test_company_initializes():
 
     assert company.id == CompanyId.from_sequence(1,)
 
-    assert str(company.id) == "COMP-00000001"
+    assert str(company.id) == "ACL-COM-00000001"
 
     assert company.canonical_name == "DRUGSTOC"
 

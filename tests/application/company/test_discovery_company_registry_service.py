@@ -22,6 +22,11 @@ from acios_discovery.domain.sources import Source
 from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
     InMemoryCompanyRepository,
 )
+from acios_discovery.application.company.sequential_company_id_allocator import (
+    SequentialCompanyIdAllocator,
+)
+
+
 
 
 def make_discovery(
@@ -49,7 +54,7 @@ async def test_register_creates_company():
     service = DiscoveryCompanyRegistryService(
         repository=company_repository,
         resolution_service=resolution,
-        factory=CompanyFactory(),
+        factory=CompanyFactory(id_allocator=SequentialCompanyIdAllocator(),),
         merge_service=CompanyMergeService(),
     )
 
@@ -70,10 +75,9 @@ async def test_register_merges_duplicate():
 
     company_repository = InMemoryCompanyRepository()
 
-    factory = CompanyFactory()
+    factory = CompanyFactory(id_allocator=SequentialCompanyIdAllocator(),)
 
-    existing = factory.create(
-        sequence=1,
+    existing = await factory.create(
         discovery=make_discovery(
             "Drugstoc",
             phone="08030000000",
@@ -92,7 +96,7 @@ async def test_register_merges_duplicate():
     service = DiscoveryCompanyRegistryService(
         repository=company_repository,
         resolution_service=resolution,
-        factory=CompanyFactory(),
+        factory=CompanyFactory(id_allocator=SequentialCompanyIdAllocator(),),
         merge_service=CompanyMergeService(),
     )
 

@@ -38,7 +38,7 @@ async def main() -> None:
     #
 
     category_slug = category_provider.require(
-        "food",
+        "healthcare",
     )
 
     #

@@ -2,27 +2,35 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+from acios_discovery.application.company.company_id_allocator import (
+    CompanyIdAllocator,
+)
 from acios_discovery.application.normalization.canonical_business_name import (
     CanonicalBusinessNameNormalizer,
 )
 from acios_discovery.domain.company.company import Company
-from acios_discovery.domain.company.company_id import CompanyId
 from acios_discovery.domain.discovery.models import RawDiscovery
 
 
 class CompanyFactory:
     """
     Creates a Company aggregate from a RawDiscovery.
+
+    Company identity is supplied by the configured
+    CompanyIdAllocator.
     """
 
-    def __init__(self):
-
-        self._normalizer = CanonicalBusinessNameNormalizer()
-
-    def create(
+    def __init__(
         self,
         *,
-        sequence: int,
+        id_allocator: CompanyIdAllocator,
+    ) -> None:
+        self._normalizer = CanonicalBusinessNameNormalizer()
+        self._id_allocator = id_allocator
+
+    async def create(
+        self,
+        *,
         discovery: RawDiscovery,
     ) -> Company:
 
@@ -30,8 +38,10 @@ class CompanyFactory:
             discovery.business_name,
         )
 
+        company_id = await self._id_allocator.allocate()
+
         company = Company(
-            id=CompanyId.from_sequence(sequence),
+            id=company_id,
             canonical_name=canonical,
             first_seen=datetime.now(UTC),
             last_seen=datetime.now(UTC),

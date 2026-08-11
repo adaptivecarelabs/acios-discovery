@@ -15,6 +15,11 @@ from acios_discovery.domain.discovery.context import DiscoveryContext
 from acios_discovery.domain.discovery.models import RawDiscovery
 from acios_discovery.domain.discovery.record import DiscoveryRecord
 from acios_discovery.domain.sources import Source
+from acios_discovery.application.company.sequential_company_id_allocator import (
+    SequentialCompanyIdAllocator,
+)
+
+
 
 
 def make_record() -> DiscoveryRecord:
@@ -44,7 +49,7 @@ async def test_pipeline_saves_new_discovery() -> None:
 
     resolution_service = AsyncMock()
 
-    company_factory = CompanyFactory()
+    company_factory = CompanyFactory(id_allocator=SequentialCompanyIdAllocator(),)
 
     resolution_service.resolve.return_value = ResolutionResult(
         company = None,
@@ -85,7 +90,7 @@ async def test_pipeline_skips_existing_discovery() -> None:
 
     resolution_service = AsyncMock()
 
-    company_factory = CompanyFactory()
+    company_factory = CompanyFactory(id_allocator=SequentialCompanyIdAllocator(),)
 
     pipeline = DiscoveryPersistencePipeline(
         discovery_repository=discovery_repository,
@@ -125,7 +130,7 @@ async def test_pipeline_resolves_saved_discovery() -> None:
         duplicate=False,
     )
 
-    company_factory = CompanyFactory()
+    company_factory = CompanyFactory(id_allocator=SequentialCompanyIdAllocator(),)
 
     pipeline = DiscoveryPersistencePipeline(
         discovery_repository=discovery_repository,
@@ -163,7 +168,7 @@ async def test_pipeline_creates_new_company() -> None:
         duplicate=False,
     )
 
-    company_factory = CompanyFactory()
+    company_factory = CompanyFactory(id_allocator=SequentialCompanyIdAllocator(),)
 
     pipeline = DiscoveryPersistencePipeline(
         discovery_repository=discovery_repository,
@@ -192,8 +197,7 @@ async def test_pipeline_updates_existing_company() -> None:
 
     resolution_service = AsyncMock()
 
-    existing_company = CompanyFactory().create(
-        sequence=1,
+    existing_company = await CompanyFactory(id_allocator=SequentialCompanyIdAllocator(),).create(
         discovery=make_record().company,
     )
 
@@ -203,7 +207,7 @@ async def test_pipeline_updates_existing_company() -> None:
         duplicate=True,
     )
 
-    company_factory = CompanyFactory()
+    company_factory = CompanyFactory(id_allocator=SequentialCompanyIdAllocator(),)
 
     pipeline = DiscoveryPersistencePipeline(
         discovery_repository=discovery_repository,

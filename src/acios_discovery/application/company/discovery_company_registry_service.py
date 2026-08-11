@@ -76,8 +76,7 @@ class DiscoveryCompanyRegistryService:
             discovery.business_name,
         )
 
-        company = self._factory.create(
-            sequence=sequence,
+        company = await self._factory.create(
             discovery=discovery,
         )
 

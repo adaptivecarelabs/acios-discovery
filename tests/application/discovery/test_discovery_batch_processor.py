@@ -25,6 +25,12 @@ from acios_discovery.infrastructure.repositories.in_memory_company_match_reposit
 from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
     InMemoryCompanyRepository,
 )
+from acios_discovery.application.company.sequential_company_id_allocator import (
+    SequentialCompanyIdAllocator,
+)
+
+
+
 
 
 def make_discovery(name: str) -> RawDiscovery:
@@ -49,7 +55,7 @@ async def test_batch_processor_processes_multiple_discoveries():
     registry = DiscoveryCompanyRegistryService(
         repository=company_repository,
         resolution_service=resolution,
-        factory=CompanyFactory(),
+        factory=CompanyFactory(id_allocator=SequentialCompanyIdAllocator(),),
         merge_service=CompanyMergeService(),
     )
 

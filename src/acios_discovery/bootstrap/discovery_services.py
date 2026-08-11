@@ -66,8 +66,14 @@ from acios_discovery.infrastructure.persistence.in_memory_discovery_repository i
 from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
     InMemoryCompanyRepository,
 )
-
 from .crawling_services import CrawlingServices
+from acios_discovery.application.company.sequential_company_id_allocator import (
+    SequentialCompanyIdAllocator,
+)
+
+
+
+
 
 
 class DiscoveryServices:
@@ -140,7 +146,11 @@ class DiscoveryServices:
             )
         )
 
-        self.factory = CompanyFactory()
+        self.company_id_allocator = SequentialCompanyIdAllocator()
+
+        self.factory = CompanyFactory(
+            id_allocator=self.company_id_allocator,
+        )
 
         self.merge_service = CompanyMergeService()
 

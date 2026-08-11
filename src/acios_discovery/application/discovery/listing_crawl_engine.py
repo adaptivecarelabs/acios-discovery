@@ -25,7 +25,7 @@ class ListingCrawlEngine:
     Executes one CrawlJob.
 
     The engine operates at execution time. It receives a CrawlJob,
-    reconstructs the corresponding listing URL, crawls the listing
+    reconstructs the corresponding listing URL, crawls listing
     pages, persists discovered records, and returns crawl statistics.
     """
 
@@ -46,7 +46,6 @@ class ListingCrawlEngine:
         self,
         job: CrawlJob,
     ) -> ListingCrawlResult:
-
         plan = CrawlPlan(
             state=job.state,
             city=job.city,
@@ -58,7 +57,7 @@ class ListingCrawlEngine:
             plan,
         )
 
-        current_url: str | None  = initial_listing.url
+        current_url: str | None = initial_listing.url
 
         pages = 0
         companies = 0
@@ -68,7 +67,6 @@ class ListingCrawlEngine:
         visited_urls: set[str] = set()
 
         while current_url is not None:
-
             if current_url in visited_urls:
                 logger.warning(
                     "Pagination loop detected at %s",

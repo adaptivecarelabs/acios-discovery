@@ -63,8 +63,7 @@ class DiscoveryPersistencePipeline:
         )
 
         if not result.duplicate:
-            company = self._company_factory.create(
-                sequence=sequence,
+            company = await self._company_factory.create(
                 discovery=discovery.company,
             )
 

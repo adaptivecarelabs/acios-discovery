@@ -14,7 +14,7 @@ class CompanyId:
 
     value: str
 
-    PREFIX = "COMP"
+    PREFIX = "ACL-COM"
 
     @classmethod
     def from_sequence(

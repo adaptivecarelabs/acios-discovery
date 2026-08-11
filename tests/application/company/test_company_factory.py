@@ -1,6 +1,9 @@
 from acios_discovery.application.company.company_factory import (
     CompanyFactory,
 )
+from acios_discovery.application.company.sequential_company_id_allocator import (
+    SequentialCompanyIdAllocator,
+)
 from acios_discovery.domain.discovery.models import (
     RawDiscovery,
 )
@@ -8,7 +11,6 @@ from acios_discovery.domain.sources import Source
 
 
 def make_discovery() -> RawDiscovery:
-
     return RawDiscovery(
         source=Source.FINELIB,
         business_name="Drugstoc EHub Ltd",
@@ -24,16 +26,20 @@ def make_discovery() -> RawDiscovery:
     )
 
 
-def test_factory_creates_company():
+def make_factory() -> CompanyFactory:
+    return CompanyFactory(
+        id_allocator=SequentialCompanyIdAllocator(),
+    )
 
-    factory = CompanyFactory()
 
-    company = factory.create(
-        sequence=1,
+async def test_factory_creates_company():
+    factory = make_factory()
+
+    company = await factory.create(
         discovery=make_discovery(),
     )
 
-    assert str(company.id) == "COMP-00000001"
+    assert str(company.id) == "ACL-COM-00000001"
 
     assert company.canonical_name == "DRUGSTOC EHUB"
 
@@ -54,41 +60,34 @@ def test_factory_creates_company():
     assert Source.FINELIB in company.sources
 
 
-def test_factory_generates_new_ids():
+async def test_factory_generates_new_ids():
+    factory = make_factory()
 
-    factory = CompanyFactory()
-
-    first = factory.create(
-        sequence=1,
+    first = await factory.create(
         discovery=make_discovery(),
     )
 
-    second = factory.create(
-        sequence=2,
+    second = await factory.create(
         discovery=make_discovery(),
     )
 
     assert first.id != second.id
 
 
-def test_factory_keeps_original_name_as_alias():
+async def test_factory_keeps_original_name_as_alias():
+    factory = make_factory()
 
-    factory = CompanyFactory()
-
-    company = factory.create(
-        sequence=10,
+    company = await factory.create(
         discovery=make_discovery(),
     )
 
     assert "Drugstoc EHub Ltd" in company.aliases
 
 
-def test_factory_canonicalizes_name():
+async def test_factory_canonicalizes_name():
+    factory = make_factory()
 
-    factory = CompanyFactory()
-
-    company = factory.create(
-        sequence=1,
+    company = await factory.create(
         discovery=make_discovery(),
     )
 
