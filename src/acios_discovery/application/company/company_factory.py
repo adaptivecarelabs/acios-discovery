@@ -43,6 +43,7 @@ class CompanyFactory:
         company = Company(
             id=company_id,
             canonical_name=canonical,
+            description=discovery.description,
             first_seen=datetime.now(UTC),
             last_seen=datetime.now(UTC),
         )

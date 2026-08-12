@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,22 +9,24 @@ from .database import SessionFactory
 
 
 @asynccontextmanager
-async def session_scope():
+async def session_scope() -> AsyncIterator[AsyncSession]:
+    """
+    Provide one transactional AsyncSession.
 
-    session: AsyncSession = SessionFactory()
+    The caller performs all repository operations using
+    this session.
 
-    try:
+    Successful operations are committed.
 
-        yield session
+    Exceptions cause a rollback.
+    """
 
-        await session.commit()
+    async with SessionFactory() as session:
+        try:
+            yield session
 
-    except Exception:
+            await session.commit()
 
-        await session.rollback()
-
-        raise
-
-    finally:
-
-        await session.close()
+        except Exception:
+            await session.rollback()
+            raise

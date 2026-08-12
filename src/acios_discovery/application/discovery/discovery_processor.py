@@ -10,10 +10,11 @@ from acios_discovery.shared.logging import logger
 
 class DiscoveryProcessor:
     """
-    High-level application service responsible for processing a
-    single RawDiscovery into the Company Registry.
+    High-level application service responsible for processing
+    a single RawDiscovery into the Company Registry.
 
-    It delegates all registry logic to DiscoveryCompanyRegistryService.
+    It delegates all registry logic to
+    DiscoveryCompanyRegistryService.
     """
 
     def __init__(
@@ -25,7 +26,6 @@ class DiscoveryProcessor:
     async def process(
         self,
         *,
-        sequence: int,
         discovery: RawDiscovery,
     ) -> Company:
         """
@@ -37,9 +37,7 @@ class DiscoveryProcessor:
             discovery.business_name,
         )
 
-
         company = await self._registry_service.register(
-            sequence=sequence,
             discovery=discovery,
         )
 

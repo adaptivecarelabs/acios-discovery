@@ -10,12 +10,14 @@ from acios_discovery.infrastructure.persistence.repositories.company_repository 
 def make_company(
     sequence: int = 1,
     name: str = "Drugstoc EHub Ltd",
+    description: str | None = None,
 ) -> Company:
     return Company(
         id=CompanyId.from_sequence(
             sequence,
         ),
         canonical_name=name,
+        description=description,
     )
 
 
@@ -43,6 +45,36 @@ async def test_add_and_get_company(
     assert loaded.canonical_name == (
         "Drugstoc EHub Ltd"
     )
+
+
+async def test_company_description_is_persisted_and_reloaded(
+    db_session: AsyncSession,
+) -> None:
+    repository = SqlAlchemyCompanyRepository(
+        db_session,
+    )
+
+    company = make_company(
+        description="A healthcare technology company.",
+    )
+
+    await repository.add(
+        company,
+    )
+
+    await db_session.commit()
+
+    loaded = await repository.get(
+        company.id,
+    )
+
+    assert loaded is not None
+
+    assert loaded.description == (
+        "A healthcare technology company."
+    )
+
+
 
 
 async def test_list_all_companies(
@@ -105,7 +137,9 @@ async def test_update_company(
         db_session,
     )
 
-    company = make_company()
+    company = make_company(
+        description="Initial company description.",
+    )
 
     await repository.add(
         company,
@@ -115,6 +149,10 @@ async def test_update_company(
 
     company.canonical_name = (
         "Drugstoc EHub Limited"
+    )
+
+    company.description = (
+        "Updated healthcare technology company."
     )
 
     company.add_phone(
@@ -143,6 +181,10 @@ async def test_update_company(
 
     assert loaded.canonical_name == (
         "Drugstoc EHub Limited"
+    )
+
+    assert loaded.description == (
+        "Updated healthcare technology company."
     )
 
     assert "08030000000" in (
@@ -389,3 +431,5 @@ async def test_find_by_website_is_normalized(
 
     assert loaded is not None
     assert loaded.id == company.id
+
+

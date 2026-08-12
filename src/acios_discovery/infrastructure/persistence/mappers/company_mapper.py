@@ -40,6 +40,7 @@ class CompanyMapper:
         orm = CompanyORM(
             id=company.id.value,
             canonical_name=company.canonical_name,
+            description=company.description,
             confidence=company.confidence,
             active=company.active,
             year_founded=company.year_founded,
@@ -171,6 +172,7 @@ class CompanyMapper:
         company = Company(
             id=CompanyId.parse(orm.id),
             canonical_name=orm.canonical_name,
+            description=orm.description,
             confidence=orm.confidence,
             active=orm.active,
             year_founded=orm.year_founded,
@@ -341,6 +343,7 @@ class CompanyMapper:
         orm.canonical_name_normalized=normalize_company_name(
             company.canonical_name,
         )
+        orm.description = company.description
         orm.confidence = company.confidence
         orm.active = company.active
         orm.year_founded = company.year_founded

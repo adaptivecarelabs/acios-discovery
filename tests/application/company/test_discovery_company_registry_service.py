@@ -59,7 +59,6 @@ async def test_register_creates_company():
     )
 
     company = await service.register(
-        sequence=1,
         discovery=make_discovery(
             "Drugstoc",
         ),
@@ -101,7 +100,6 @@ async def test_register_merges_duplicate():
     )
 
     company = await service.register(
-        sequence=1,
         discovery=make_discovery(
             "Drugstoc Ltd",
             phone="08030000000",

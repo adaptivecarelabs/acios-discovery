@@ -24,23 +24,15 @@ class DiscoveryBatchProcessor:
     async def process(
         self,
         discoveries: list[RawDiscovery],
-        *,
-        starting_sequence: int = 1,
     ) -> list[Company]:
 
         companies: list[Company] = []
 
-        sequence = starting_sequence
-
         for discovery in discoveries:
-
             company = await self._processor.process(
-                sequence=sequence,
                 discovery=discovery,
             )
 
             companies.append(company)
-
-            sequence += 1
 
         return companies

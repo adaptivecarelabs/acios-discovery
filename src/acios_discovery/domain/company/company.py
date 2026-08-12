@@ -22,6 +22,8 @@ class Company:
 
     canonical_name: str
 
+    description: str | None = None
+
     #
     # Identity
     #

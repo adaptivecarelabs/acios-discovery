@@ -114,3 +114,16 @@ def test_touch_updates_last_seen():
     company.touch()
 
     assert company.last_seen >= previous
+
+
+def test_company_accepts_description():
+
+    company = Company(
+        id=CompanyId.from_sequence(1),
+        canonical_name="DRUGSTOC",
+        description="A healthcare technology company.",
+    )
+
+    assert company.description == (
+        "A healthcare technology company."
+    )

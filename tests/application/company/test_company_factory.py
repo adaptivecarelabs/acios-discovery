@@ -14,6 +14,7 @@ def make_discovery() -> RawDiscovery:
     return RawDiscovery(
         source=Source.FINELIB,
         business_name="Drugstoc EHub Ltd",
+        description="A healthcare technology company.",
         phone_numbers=[
             "08030000000",
         ],
@@ -92,3 +93,16 @@ async def test_factory_canonicalizes_name():
     )
 
     assert company.canonical_name == "DRUGSTOC EHUB"
+
+
+async def test_factory_copies_description():
+
+    factory = make_factory()
+
+    company = await factory.create(
+        discovery=make_discovery(),
+    )
+
+    assert company.description == (
+        "A healthcare technology company."
+    )

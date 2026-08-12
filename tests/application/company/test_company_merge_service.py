@@ -25,6 +25,7 @@ def make_discovery() -> RawDiscovery:
     return RawDiscovery(
         source="Google",
         business_name="Drugstoc EHub Ltd",
+        description="A healthcare technology company.",
         phone_numbers=[
             "08030000000",
         ],
@@ -109,3 +110,57 @@ def test_merge_category():
     )
 
     assert "Pharmacy" in company.categories
+
+
+def test_merge_description_when_missing():
+
+    service = CompanyMergeService()
+
+    company = service.merge(
+        make_company(),
+        make_discovery(),
+    )
+
+    assert company.description == (
+        "A healthcare technology company."
+    )
+
+
+def test_merge_does_not_overwrite_existing_description():
+
+    service = CompanyMergeService()
+
+    company = make_company()
+    company.description = "Existing canonical description."
+
+    discovery = make_discovery()
+    discovery.description = "New discovery description."
+
+    company = service.merge(
+        company,
+        discovery,
+    )
+
+    assert company.description == (
+        "Existing canonical description."
+    )
+
+
+def test_merge_does_not_clear_existing_description():
+
+    service = CompanyMergeService()
+
+    company = make_company()
+    company.description = "Existing canonical description."
+
+    discovery = make_discovery()
+    discovery.description = None
+
+    company = service.merge(
+        company,
+        discovery,
+    )
+
+    assert company.description == (
+        "Existing canonical description."
+    )

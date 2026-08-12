@@ -37,6 +37,8 @@ class CompanyORM(Base):
         index=True,
     )
 
+    description: Mapped[str | None]
+
     confidence: Mapped[float] = mapped_column(
         Float,
         default=100,

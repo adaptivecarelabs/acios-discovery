@@ -15,6 +15,7 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from acios_discovery.infrastructure.persistence.metadata import Base
+from acios_discovery.infrastructure.persistence import orm
 
 config = context.config
 load_dotenv()

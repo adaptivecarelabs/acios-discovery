@@ -61,7 +61,6 @@ async def test_process_registers_company():
     )
 
     company = await processor.process(
-        sequence=1,
         discovery=make_discovery(
             "Drugstoc",
         ),

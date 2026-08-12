@@ -28,7 +28,6 @@ class DiscoveryCompanyRegistryService:
 
     async def register(
         self,
-        sequence: int,
         discovery: RawDiscovery,
     ) -> Company:
 

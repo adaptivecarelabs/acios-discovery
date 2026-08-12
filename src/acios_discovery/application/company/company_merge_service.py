@@ -143,6 +143,12 @@ class CompanyMergeService:
         ):
             company.business_locations = discovery.business_locations
 
+        if (
+            company.description is None
+            and discovery.description is not None
+        ):
+            company.description = discovery.description
+
         return company
 
     

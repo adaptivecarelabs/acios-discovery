@@ -58,8 +58,6 @@ class FakeBatchProcessor:
     async def process(
         self,
         discoveries,
-        *,
-        starting_sequence=1,
     ):
         return discoveries
 

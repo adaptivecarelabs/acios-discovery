@@ -1,17 +1,9 @@
 from __future__ import annotations
 
-from urllib.parse import urlparse
-
-from sqlalchemy import (
-    func,
-    select,
-)
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from acios_discovery.application.normalization.canonical_business_name import (
-    CanonicalBusinessNameNormalizer,
-)
 from acios_discovery.application.normalization.company_lookup import (
     normalize_company_alias,
     normalize_company_email,
@@ -20,167 +12,88 @@ from acios_discovery.application.normalization.company_lookup import (
     normalize_company_website,
 )
 from acios_discovery.domain.company.company import Company
-from acios_discovery.domain.company.company_id import CompanyId
 from acios_discovery.domain.company.company_repository import (
     CompanyRepository,
 )
 from acios_discovery.infrastructure.persistence.mappers.company_mapper import (
     CompanyMapper,
 )
-from acios_discovery.infrastructure.persistence.orm.company import (
-    CompanyORM,
-)
-from acios_discovery.infrastructure.persistence.orm.company_alias import (
+from acios_discovery.infrastructure.persistence.orm import (
+    AddressORM,
+    CategoryORM,
+    CityORM,
     CompanyAliasORM,
-)
-from acios_discovery.infrastructure.persistence.orm.email import (
+    CompanyORM,
     EmailORM,
-)
-from acios_discovery.infrastructure.persistence.orm.phone_number import (
+    PaymentMethodORM,
     PhoneNumberORM,
-)
-from acios_discovery.infrastructure.persistence.orm.website import (
+    ProductTypeORM,
+    SocialLinkORM,
+    SourceORM,
+    StateORM,
     WebsiteORM,
 )
 
 
-class SqlAlchemyCompanyRepository(
-    CompanyRepository,
-):
+class SqlAlchemyCompanyRepository(CompanyRepository):
     """
-    SQLAlchemy implementation
-    of CompanyRepository.
+    SQLAlchemy implementation of CompanyRepository.
+
+    The repository operates on an externally supplied AsyncSession
+    so multiple repositories can participate in the same transaction.
     """
 
     def __init__(
         self,
         session: AsyncSession,
-    ):
+    ) -> None:
         self._session = session
-        self._normalizer = CanonicalBusinessNameNormalizer()
 
+    # ------------------------------------------------------------------
+    # Loading
+    # ------------------------------------------------------------------
 
-    def _normalize_website(
-        self,
-        website: str,
-    ) -> str:
-
-        if not website:
-            return ""
-
-        if "://" not in website:
-            website = "https://" + website
-
-        domain = urlparse(
-            website,
-        ).netloc.lower()
-
-        return domain.removeprefix(
-            "www."
-        )
-
-
-
-    def _company_load_options(self):
+    @staticmethod
+    def _company_load_options():
         """
-        Explicitly eager-load all Company aggregate collections.
-
-        The domain mapper accesses these relationships while converting
-        CompanyORM into the domain Company object. Explicit selectinload()
-        prevents SQLAlchemy async lazy-loading / MissingGreenlet errors.
+        Load the complete Company aggregate in one predictable query
+        graph.
         """
 
         return (
             selectinload(CompanyORM.aliases),
+            selectinload(CompanyORM.emails),
+            selectinload(CompanyORM.websites),
             selectinload(CompanyORM.addresses),
+            selectinload(CompanyORM.phone_numbers),
+            selectinload(CompanyORM.social_links),
+            selectinload(CompanyORM.product_types),
+            selectinload(CompanyORM.payment_methods),
             selectinload(CompanyORM.categories),
             selectinload(CompanyORM.cities),
-            selectinload(CompanyORM.emails),
-            selectinload(CompanyORM.payment_methods),
-            selectinload(CompanyORM.phone_numbers),
-            selectinload(CompanyORM.product_types),
-            selectinload(CompanyORM.social_links),
-            selectinload(CompanyORM.sources),
             selectinload(CompanyORM.states),
-            selectinload(CompanyORM.websites),
+            selectinload(CompanyORM.sources),
         )
 
-    
-    #
-    # CRUD
-    #
+    # ------------------------------------------------------------------
+    # Write operations
+    # ------------------------------------------------------------------
 
     async def add(
         self,
         company: Company,
     ) -> None:
+        """
+        Persist a new Company aggregate.
+        """
 
-        orm = CompanyMapper.to_orm(company)
-
-        self._session.add(orm)
-
-
-    async def get(
-        self,
-        company_id: CompanyId,
-    ) -> Company | None:
-
-        stmt = (
-            select(CompanyORM)
-            .options(
-                *self._company_load_options(),
-            )
-            .where(
-                CompanyORM.id == company_id.value,
-            )
+        orm = CompanyMapper.to_orm(
+            company,
         )
 
-        result = await self._session.execute(stmt)
-
-        orm = result.scalar_one_or_none()
-
-        if orm is None:
-            return None
-
-        return CompanyMapper.to_domain(orm)
-    
-
-    async def list_all(
-        self,
-    ) -> list[Company]:
-
-        stmt = (
-            select(CompanyORM)
-            .options(
-                *self._company_load_options(),
-            )
+        self._session.add(
+            orm,
         )
-
-        result = await self._session.execute(stmt)
-
-        return [
-            CompanyMapper.to_domain(company)
-            for company in result.scalars().all()
-        ]
-    
-
-    async def count(
-        self,
-    ) -> int:
-
-        stmt = (
-            select(
-                func.count(),
-            )
-            .select_from(
-                CompanyORM,
-            )
-        )
-
-        result = await self._session.execute(stmt)
-
-        return result.scalar_one()
-    
 
     async def update(
         self,
@@ -200,13 +113,15 @@ class SqlAlchemyCompanyRepository(
             )
         )
 
-        result = await self._session.execute(stmt)
+        result = await self._session.execute(
+            stmt,
+        )
 
         orm = result.scalar_one_or_none()
 
         if orm is None:
             raise ValueError(
-                f"Company not found: {company.id.value}",
+                f"Company does not exist: {company.id.value}",
             )
 
         CompanyMapper.update_orm(
@@ -214,14 +129,114 @@ class SqlAlchemyCompanyRepository(
             company,
         )
 
-    #
-    # LOOKUPS
-    #
+    # ------------------------------------------------------------------
+    # General queries
+    # ------------------------------------------------------------------
+
+    async def get(
+        self,
+        company_id,
+    ) -> Company | None:
+        """
+        Retrieve a company by its domain ID.
+        """
+
+        stmt = (
+            select(CompanyORM)
+            .options(
+                *self._company_load_options(),
+            )
+            .where(
+                CompanyORM.id == company_id.value,
+            )
+        )
+
+        result = await self._session.execute(
+            stmt,
+        )
+
+        orm = result.scalar_one_or_none()
+
+        if orm is None:
+            return None
+
+        return CompanyMapper.to_domain(
+            orm,
+        )
+
+    async def list_all(
+        self,
+    ) -> list[Company]:
+        """
+        Return all registered companies.
+        """
+
+        stmt = (
+            select(CompanyORM)
+            .options(
+                *self._company_load_options(),
+            )
+            .order_by(
+                CompanyORM.id,
+            )
+        )
+
+        result = await self._session.execute(
+            stmt,
+        )
+
+        rows = result.scalars().all()
+
+        return [
+            CompanyMapper.to_domain(row)
+            for row in rows
+        ]
+
+    async def count(
+        self,
+    ) -> int:
+        """
+        Return the number of registered companies.
+        """
+
+        stmt = select(
+            CompanyORM.id,
+        )
+
+        result = await self._session.execute(
+            stmt,
+        )
+
+        return len(
+            result.scalars().all(),
+        )
+
+    async def clear(
+        self,
+    ) -> None:
+        """
+        Delete all companies.
+        """
+
+        stmt = delete(
+            CompanyORM,
+        )
+
+        await self._session.execute(
+            stmt,
+        )
+
+    # ------------------------------------------------------------------
+    # Identity resolution
+    # ------------------------------------------------------------------
 
     async def find_by_name(
         self,
         canonical_name: str,
     ) -> Company | None:
+        """
+        Find a company by normalized canonical name.
+        """
 
         normalized = normalize_company_name(
             canonical_name,
@@ -238,21 +253,26 @@ class SqlAlchemyCompanyRepository(
             )
         )
 
-        result = await self._session.execute(stmt)
+        result = await self._session.execute(
+            stmt,
+        )
 
         orm = result.scalar_one_or_none()
 
         if orm is None:
             return None
 
-        return CompanyMapper.to_domain(orm)
-
-    
+        return CompanyMapper.to_domain(
+            orm,
+        )
 
     async def find_by_alias(
         self,
         alias: str,
     ) -> Company | None:
+        """
+        Find a company through one of its aliases.
+        """
 
         normalized = normalize_company_alias(
             alias,
@@ -274,21 +294,26 @@ class SqlAlchemyCompanyRepository(
             )
         )
 
-        result = await self._session.execute(stmt)
+        result = await self._session.execute(
+            stmt,
+        )
 
         orm = result.scalar_one_or_none()
 
         if orm is None:
             return None
 
-        return CompanyMapper.to_domain(orm)
-
-    
+        return CompanyMapper.to_domain(
+            orm,
+        )
 
     async def find_by_phone(
         self,
         phone: str,
     ) -> Company | None:
+        """
+        Find a company by normalized phone number.
+        """
 
         normalized = normalize_company_phone(
             phone,
@@ -310,21 +335,26 @@ class SqlAlchemyCompanyRepository(
             )
         )
 
-        result = await self._session.execute(stmt)
+        result = await self._session.execute(
+            stmt,
+        )
 
         orm = result.scalar_one_or_none()
 
         if orm is None:
             return None
 
-        return CompanyMapper.to_domain(orm)
+        return CompanyMapper.to_domain(
+            orm,
+        )
 
-
-    
     async def find_by_email(
         self,
         email: str,
     ) -> Company | None:
+        """
+        Find a company by normalized email address.
+        """
 
         normalized = normalize_company_email(
             email,
@@ -346,21 +376,26 @@ class SqlAlchemyCompanyRepository(
             )
         )
 
-        result = await self._session.execute(stmt)
+        result = await self._session.execute(
+            stmt,
+        )
 
         orm = result.scalar_one_or_none()
 
         if orm is None:
             return None
 
-        return CompanyMapper.to_domain(orm)
-
-    
+        return CompanyMapper.to_domain(
+            orm,
+        )
 
     async def find_by_website(
         self,
         website: str,
     ) -> Company | None:
+        """
+        Find a company by normalized website.
+        """
 
         normalized = normalize_company_website(
             website,
@@ -382,12 +417,15 @@ class SqlAlchemyCompanyRepository(
             )
         )
 
-        result = await self._session.execute(stmt)
+        result = await self._session.execute(
+            stmt,
+        )
 
         orm = result.scalar_one_or_none()
 
         if orm is None:
             return None
 
-        return CompanyMapper.to_domain(orm)
-
+        return CompanyMapper.to_domain(
+            orm,
+        )
