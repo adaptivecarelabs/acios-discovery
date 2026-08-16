@@ -5,8 +5,8 @@ import pytest
 from acios_discovery.application.crawling.crawl_job_factory import (
     CrawlJobFactory,
 )
-from acios_discovery.application.discovery.listing_crawl_result import (
-    ListingCrawlResult,
+from acios_discovery.application.discovery.result import (
+    DiscoveryRunResult,
 )
 from acios_discovery.application.orchestration import (
     DiscoveryOrchestrator,
@@ -24,11 +24,14 @@ from acios_discovery.infrastructure.connectors.finelib.url_slug_mapper import (
 
 @pytest.mark.asyncio
 async def test_orchestrator_runs_engine() -> None:
-    engine = AsyncMock()
+    pipeline = AsyncMock()
 
-    engine.execute.return_value = ListingCrawlResult(
+    pipeline.execute.return_value = DiscoveryRunResult(
+        records_found=83,
+        records_saved=83,
+        duplicates=0,
         pages_crawled=4,
-        companies_discovered=83,
+        source="finelib",
     )
 
     listing_builder = ListingUrlBuilder(
@@ -37,7 +40,7 @@ async def test_orchestrator_runs_engine() -> None:
     )
 
     orchestrator = DiscoveryOrchestrator(
-        engine=engine,
+        pipeline=pipeline,
         job_factory=CrawlJobFactory(),
         listing_builder=listing_builder,
     )
@@ -48,10 +51,10 @@ async def test_orchestrator_runs_engine() -> None:
         category_slug="restaurants",
     )
 
-    engine.execute.assert_awaited_once()
+    pipeline.execute.assert_awaited_once()
 
     submitted_job = (
-        engine.execute.await_args.args[0]
+        pipeline.execute.await_args.args[0]
     )
 
     assert submitted_job.state == "Lagos"

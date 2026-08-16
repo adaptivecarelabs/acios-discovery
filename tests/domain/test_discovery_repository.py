@@ -1,6 +1,6 @@
 from inspect import isabstract
 
-from acios_discovery.domain.repositories.discovery import (
+from acios_discovery.domain.discovery.repository import (
     DiscoveryRepository,
 )
 

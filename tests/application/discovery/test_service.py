@@ -71,13 +71,13 @@ class FakeEnricher:
 
 @pytest.mark.asyncio
 async def test_service_saves_new_records(
-    sample_discovery_record,
+    discovery_record,
 ):
 
     repository = InMemoryDiscoveryRepository()
 
     connector = FakeConnector(
-        records=[sample_discovery_record],
+        records=[discovery_record],
     )
 
     enricher = FakeEnricher()
@@ -115,17 +115,17 @@ async def test_service_saves_new_records(
 
 @pytest.mark.asyncio
 async def test_service_skips_duplicates(
-    sample_discovery_record,
+    discovery_record,
 ):
 
     repository = InMemoryDiscoveryRepository()
 
     await repository.save(
-        sample_discovery_record,
+        discovery_record,
     )
 
     connector = FakeConnector(
-        records=[sample_discovery_record],
+        records=[discovery_record],
     )
 
     enricher = FakeEnricher()
@@ -199,7 +199,7 @@ async def test_service_handles_empty_listing():
 
 @pytest.mark.asyncio
 async def test_service_crawls_multiple_listing_pages(
-    sample_discovery_record,
+    discovery_record,
 ):
     """
     Service should continue crawling until
@@ -208,12 +208,12 @@ async def test_service_crawls_multiple_listing_pages(
 
     repository = InMemoryDiscoveryRepository()
 
-    page1_record = sample_discovery_record
+    page1_record = discovery_record
 
-    page2_record = sample_discovery_record.model_copy(
+    page2_record = discovery_record.model_copy(
         update={
             "company": replace(
-                sample_discovery_record.company,
+                discovery_record.company,
                 business_name="Second Business",
                 detail_url="https://example.com/company-2",
             )
@@ -267,7 +267,7 @@ async def test_service_crawls_multiple_listing_pages(
 
 @pytest.mark.asyncio
 async def test_service_does_not_revisit_same_page(
-    sample_discovery_record,
+    discovery_record,
 ):
     """
     Service should stop if the connector
@@ -280,7 +280,7 @@ async def test_service_does_not_revisit_same_page(
     connector = FakeConnector(
         pages={
             "https://example.com/page-1": [
-                sample_discovery_record,
+                discovery_record,
             ],
         },
         next_pages={

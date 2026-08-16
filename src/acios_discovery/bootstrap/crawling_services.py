@@ -21,6 +21,9 @@ from acios_discovery.application.crawling.job_scheduler import (
 from acios_discovery.application.crawling.supervision.crawl_supervisor import (
     CrawlSupervisor,
 )
+from acios_discovery.application.discovery.pipeline import (
+    DiscoveryPipeline,
+)
 from acios_discovery.application.events.in_memory_event_publisher import (
     InMemoryEventPublisher,
 )
@@ -42,14 +45,14 @@ class CrawlingServices:
     """
     Composition root for the crawl execution subsystem.
 
-    This class contains dependency wiring only.
-    It does not contain crawling business logic.
+    The CrawlWorker delegates execution to the authoritative
+    DiscoveryPipeline.
     """
 
     def __init__(
         self,
         *,
-        crawl_engine,
+        pipeline: DiscoveryPipeline,
         listing_builder: ListingUrlBuilder,
         workers: int = 4,
     ) -> None:
@@ -73,7 +76,7 @@ class CrawlingServices:
 
         def create_worker() -> CrawlWorker:
             return CrawlWorker(
-                engine=crawl_engine,
+                pipeline=pipeline,
             )
 
         self.worker_factory: CrawlWorkerFactory = create_worker

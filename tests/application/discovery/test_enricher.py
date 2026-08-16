@@ -14,10 +14,10 @@ from tests.fakes.test_html_client import FakeHttpClient
 
 @pytest.mark.asyncio
 async def test_returns_record_when_detail_url_missing(
-    sample_discovery_record,
+    discovery_record,
 ):
 
-    sample_discovery_record.company.detail_url = None
+    discovery_record.company.detail_url = None
 
     enricher = FinelibEnricher(
         http=FakeHttpClient({}),
@@ -26,15 +26,15 @@ async def test_returns_record_when_detail_url_missing(
     )
 
     result = await enricher.enrich(
-        sample_discovery_record,
+        discovery_record,
     )
 
-    assert result is sample_discovery_record
+    assert result is discovery_record
 
 
 @pytest.mark.asyncio
 async def test_enriches_company_from_detail_page(
-    sample_discovery_record,
+    discovery_record,
 ):
 
     html = """
@@ -55,7 +55,7 @@ async def test_enriches_company_from_detail_page(
     </html>    
 """
 
-    sample_discovery_record.company.detail_url = (
+    discovery_record.company.detail_url = (
         "https://example.com/company"
     )
 
@@ -72,7 +72,7 @@ async def test_enriches_company_from_detail_page(
     )
 
     result = await enricher.enrich(
-        sample_discovery_record,
+        discovery_record,
     )
 
     assert result.company.email == "info@example.com"

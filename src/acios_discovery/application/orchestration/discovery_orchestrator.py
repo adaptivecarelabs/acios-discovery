@@ -3,8 +3,8 @@ from __future__ import annotations
 from acios_discovery.application.crawling.crawl_job_factory import (
     CrawlJobFactory,
 )
-from acios_discovery.application.discovery.listing_crawl_engine import (
-    ListingCrawlEngine,
+from acios_discovery.application.discovery.pipeline import (
+    DiscoveryPipeline,
 )
 from acios_discovery.application.planning.builders.listing_url_builder import (
     ListingUrlBuilder,
@@ -18,18 +18,18 @@ class DiscoveryOrchestrator:
     """
     Application entry point for executing one discovery request.
 
-    The orchestrator converts planning input into an executable
-    CrawlJob before handing execution to the crawl engine.
+    The orchestrator creates the executable CrawlJob and delegates
+    complete discovery execution to DiscoveryPipeline.
     """
 
     def __init__(
         self,
         *,
-        engine: ListingCrawlEngine,
+        pipeline: DiscoveryPipeline,
         job_factory: CrawlJobFactory,
         listing_builder: ListingUrlBuilder,
     ) -> None:
-        self._engine = engine
+        self._pipeline = pipeline
         self._job_factory = job_factory
         self._listing_builder = listing_builder
 
@@ -55,7 +55,7 @@ class DiscoveryOrchestrator:
             listing=listing,
         )
 
-        crawl_result = await self._engine.execute(
+        result = await self._pipeline.execute(
             job,
         )
 
@@ -63,8 +63,6 @@ class DiscoveryOrchestrator:
             state=state,
             city=city,
             category_slug=category_slug,
-            pages_crawled=crawl_result.pages_crawled,
-            companies_discovered=(
-                crawl_result.companies_discovered
-            ),
+            pages_crawled=result.pages_crawled,
+            companies_discovered=result.records_found,
         )

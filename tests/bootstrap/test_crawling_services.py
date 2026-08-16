@@ -1,10 +1,8 @@
+from unittest.mock import Mock
+
 from acios_discovery.bootstrap.crawling_services import (
     CrawlingServices,
 )
-
-
-class FakeEngine:
-    pass
 
 
 class FakeListingBuilder:
@@ -12,8 +10,10 @@ class FakeListingBuilder:
 
 
 def test_crawling_services_builds_execution_graph():
+    pipeline = Mock()
+
     services = CrawlingServices(
-        crawl_engine=FakeEngine(),
+        pipeline=pipeline,
         listing_builder=FakeListingBuilder(),
         workers=4,
     )

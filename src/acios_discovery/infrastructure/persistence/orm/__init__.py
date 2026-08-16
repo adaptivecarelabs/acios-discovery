@@ -5,6 +5,7 @@ from .company import CompanyORM
 from .company_alias import CompanyAliasORM
 from .discovery import DiscoveryORM
 from .email import EmailORM
+from .outbox_event import OutboxEventORM
 from .payment_method import PaymentMethodORM
 from .phone_number import PhoneNumberORM
 from .product_type import ProductTypeORM
@@ -28,4 +29,5 @@ __all__ = [
     "StateORM",
     "WebsiteORM",
     "CompanyAliasORM",
+    "OutboxEventORM",
 ]

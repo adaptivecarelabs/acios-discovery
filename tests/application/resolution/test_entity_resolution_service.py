@@ -1,5 +1,6 @@
 import pytest
 
+from acios_discovery.application.resolution.entity_match import EntityMatch
 from acios_discovery.application.resolution.entity_resolution_engine import (
     EntityResolutionEngine,
 )
@@ -58,6 +59,7 @@ async def test_returns_no_match_when_repository_is_empty():
     assert result.company is None
     assert result.duplicate is False
     assert result.confidence == 0.0
+    assert result.match == EntityMatch.DIFFERENT
 
 
 @pytest.mark.asyncio
@@ -92,6 +94,7 @@ async def test_detects_duplicate_by_name():
     assert result.company is existing
     assert result.duplicate is True
     assert result.confidence >= 80.0
+    assert result.match == EntityMatch.STRONG_MATCH
 
 
 @pytest.mark.asyncio
@@ -156,6 +159,7 @@ async def test_non_duplicate_when_similarity_is_low():
     )
 
     assert result.duplicate is False
+    assert result.match == EntityMatch.DIFFERENT
 
 
 @pytest.mark.asyncio
@@ -185,3 +189,36 @@ async def test_repository_candidates_are_used():
     )
 
     assert result.company is not None
+
+
+@pytest.mark.asyncio
+async def test_possible_match_is_not_duplicate():
+
+    repository = InMemoryCompanyRepository()
+
+    await repository.add(
+        make_company(
+            "Drugstoc",
+        )
+    )
+
+    service = EntityResolutionService(
+        repository=repository,
+        engine=EntityResolutionEngine(),
+    )
+
+    incoming = RawDiscovery(
+        source=Source.FINELIB,
+        business_name="Drugstoc Healthcare",
+    )
+
+    result = await service.resolve(
+        incoming,
+    )
+
+    assert result.match in {
+        EntityMatch.POSSIBLE_MATCH,
+        EntityMatch.DIFFERENT,
+    }
+
+    assert result.duplicate is False

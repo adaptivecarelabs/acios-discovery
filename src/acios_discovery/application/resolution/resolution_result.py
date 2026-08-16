@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from acios_discovery.application.resolution.entity_match import EntityMatch
 from acios_discovery.domain.company.company import Company
 
 
@@ -9,18 +10,27 @@ from acios_discovery.domain.company.company import Company
     slots=True,
 )
 class ResolutionResult:
-
     """
     Result of entity resolution.
 
-    If duplicate=True,
-    company refers to the existing Company aggregate.
+    company is the best candidate found, if any.
 
-    Otherwise company is None.
+    match describes the resolution outcome.
     """
 
     company: Company | None
 
     confidence: float
 
-    duplicate: bool
+    match: EntityMatch
+
+    @property
+    def duplicate(self) -> bool:
+        """
+        Backward-compatible indication that the
+        incoming discovery should be merged.
+        """
+        return self.match in {
+            EntityMatch.SAME,
+            EntityMatch.STRONG_MATCH,
+        }

@@ -3,33 +3,38 @@ import pytest
 from acios_discovery.application.crawling.crawl_worker import (
     CrawlWorker,
 )
-from acios_discovery.application.discovery.listing_crawl_result import (
-    ListingCrawlResult,
+from acios_discovery.application.discovery.result import (
+    DiscoveryRunResult,
 )
 from acios_discovery.domain.crawling import CrawlJob
 from acios_discovery.domain.sources import Source
 
 
-class FakeEngine:
-    def __init__(self):
+class FakePipeline:
+    def __init__(self) -> None:
         self.calls = []
 
-    async def execute(self, plan):
-        self.calls.append(plan)
+    async def execute(
+        self,
+        job: CrawlJob,
+    ) -> DiscoveryRunResult:
+        self.calls.append(job)
 
-        return ListingCrawlResult(
+        return DiscoveryRunResult(
+            records_found=2,
+            records_saved=2,
+            duplicates=0,
             pages_crawled=1,
-            companies_discovered=2,
+            source=Source.FINELIB.value,
         )
 
 
 @pytest.mark.asyncio
-async def test_worker_executes_one_job():
-
-    engine = FakeEngine()
+async def test_worker_executes_one_job() -> None:
+    pipeline = FakePipeline()
 
     worker = CrawlWorker(
-        engine=engine,
+        pipeline=pipeline,
     )
 
     job = CrawlJob(
@@ -42,10 +47,9 @@ async def test_worker_executes_one_job():
 
     result = await worker.execute(job)
 
-    assert isinstance(
-        result,
-        ListingCrawlResult,
-    )
+    assert result.pages_crawled == 1
+    assert result.companies_discovered == 2
 
-    assert len(engine.calls) == 1
-    assert engine.calls[0].city == "Yaba"
+    assert len(pipeline.calls) == 1
+    assert pipeline.calls[0] is job
+    assert pipeline.calls[0].city == "Yaba"

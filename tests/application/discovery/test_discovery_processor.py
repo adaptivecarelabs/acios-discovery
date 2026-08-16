@@ -5,6 +5,9 @@ from acios_discovery.application.company.company_merge_service import CompanyMer
 from acios_discovery.application.company.discovery_company_registry_service import (
     DiscoveryCompanyRegistryService,
 )
+from acios_discovery.application.company.sequential_company_id_allocator import (
+    SequentialCompanyIdAllocator,
+)
 from acios_discovery.application.discovery.discovery_processor import (
     DiscoveryProcessor,
 )
@@ -22,12 +25,6 @@ from acios_discovery.infrastructure.repositories.in_memory_company_match_reposit
 from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
     InMemoryCompanyRepository,
 )
-from acios_discovery.application.company.sequential_company_id_allocator import (
-    SequentialCompanyIdAllocator,
-)
-
-
-
 
 
 def make_discovery(name: str) -> RawDiscovery:

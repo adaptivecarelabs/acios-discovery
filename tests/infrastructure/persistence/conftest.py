@@ -2,6 +2,7 @@ import os
 from collections.abc import AsyncGenerator
 
 import pytest_asyncio
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -10,10 +11,12 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.pool import NullPool
 
-# Import every ORM model so SQLAlchemy registers every table
-# with Base.metadata before create_all() is executed.
 from acios_discovery.infrastructure.persistence import orm  # noqa: F401
 from acios_discovery.infrastructure.persistence.metadata import Base
+
+# Load test-specific environment variables before the fixtures
+# attempt to read TEST_DATABASE_URL.
+load_dotenv(".env.test")
 
 
 @pytest_asyncio.fixture
@@ -32,13 +35,13 @@ async def test_engine() -> AsyncGenerator[AsyncEngine]:
     if not database_url:
         raise RuntimeError(
             "TEST_DATABASE_URL must be set before "
-            "running persistence tests."
+            "running persistence tests.",
         )
 
     if "acios_discovery_test" not in database_url:
         raise RuntimeError(
             "TEST_DATABASE_URL must point to the "
-            "acios_discovery_test database."
+            "acios_discovery_test database.",
         )
 
     engine = create_async_engine(

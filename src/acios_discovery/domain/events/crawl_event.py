@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 
@@ -13,6 +13,10 @@ class CrawlEvent:
     when it occurred.
     """
 
-    occurred_at: datetime = datetime.now(
-        UTC,
+    occurred_at: datetime = field(
+        default_factory=lambda: datetime.now(UTC)
     )
+
+    @property
+    def event_type(self) -> str:
+        return self.__class__.__name__

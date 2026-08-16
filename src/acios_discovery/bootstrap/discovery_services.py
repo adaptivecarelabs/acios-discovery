@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from acios_discovery.application.company.company_factory import (
     CompanyFactory,
 )
@@ -9,11 +11,17 @@ from acios_discovery.application.company.company_merge_service import (
 from acios_discovery.application.company.discovery_company_registry_service import (
     DiscoveryCompanyRegistryService,
 )
+from acios_discovery.application.company.sequential_company_id_allocator import (
+    SequentialCompanyIdAllocator,
+)
 from acios_discovery.application.discovery.detail_enrichment_engine import (
     DetailEnrichmentEngine,
 )
 from acios_discovery.application.discovery.discovery_batch_processor import (
     DiscoveryBatchProcessor,
+)
+from acios_discovery.application.discovery.discovery_persistence_service import (
+    DiscoveryPersistenceService,
 )
 from acios_discovery.application.discovery.discovery_processor import (
     DiscoveryProcessor,
@@ -23,6 +31,9 @@ from acios_discovery.application.discovery.listing_crawl_engine import (
 )
 from acios_discovery.application.discovery.listing_downloader import (
     ListingDownloader,
+)
+from acios_discovery.application.discovery.pipeline import (
+    DiscoveryPipeline,
 )
 from acios_discovery.application.enrichment.finelib_enricher import (
     FinelibEnricher,
@@ -60,46 +71,53 @@ from acios_discovery.infrastructure.connectors.finelib.url_slug_mapper import (
 from acios_discovery.infrastructure.http.httpx_client import (
     HttpxClient,
 )
-from acios_discovery.infrastructure.persistence.in_memory_discovery_repository import (
-    InMemoryDiscoveryRepository,
+from acios_discovery.infrastructure.persistence.repositories.container import (
+    PersistenceRepositories,
 )
-from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
-    InMemoryCompanyRepository,
+from acios_discovery.infrastructure.persistence.unit_of_work import (
+    SqlAlchemyUnitOfWork,
 )
+
 from .crawling_services import CrawlingServices
-from acios_discovery.application.company.sequential_company_id_allocator import (
-    SequentialCompanyIdAllocator,
-)
-
-
-
-
 
 
 class DiscoveryServices:
     """
     Composition root for the discovery subsystem.
 
-    This class wires discovery infrastructure and application
-    services together.
+    Infrastructure dependencies are supplied externally.
 
-    It contains no business logic.
+    The database repositories are bound to the AsyncSession
+    supplied to this composition root.
     """
 
     def __init__(
         self,
         *,
+        session: AsyncSession,
         workers: int = 4,
     ) -> None:
         self.http = HttpxClient()
 
+        #
+        # Persistence
+        #
+
+        self.repositories = PersistenceRepositories(
+            session,
+        )
+
         self.company_repository = (
-            InMemoryCompanyRepository()
+            self.repositories.company
         )
 
         self.discovery_repository = (
-            InMemoryDiscoveryRepository()
+            self.repositories.discovery
         )
+
+        #
+        # Finelib listing connector
+        #
 
         self.connector = FinelibConnector(
             parser=FinelibParser(),
@@ -110,6 +128,10 @@ class DiscoveryServices:
             client=self.http,
         )
 
+        #
+        # Planning
+        #
+
         self.category_provider = CategoryProvider()
 
         self.url_builder = ListingUrlBuilder(
@@ -117,12 +139,19 @@ class DiscoveryServices:
             slug_mapper=FinelibUrlSlugMapper(),
         )
 
+        #
+        # Listing crawl
+        #
+
         self.crawl_engine = ListingCrawlEngine(
             downloader=self.downloader,
             connector=self.connector,
-            repository=self.discovery_repository,
             url_builder=self.url_builder,
         )
+
+        #
+        # Detail enrichment
+        #
 
         self.enricher = FinelibEnricher(
             http=self.http,
@@ -135,6 +164,20 @@ class DiscoveryServices:
             repository=self.discovery_repository,
         )
 
+        #
+        # Discovery persistence
+        #
+
+        self.persistence = DiscoveryPersistenceService(
+            unit_of_work=SqlAlchemyUnitOfWork(
+                session=session,
+            ),
+        )
+
+        #
+        # Entity resolution
+        #
+
         self.resolution_engine = (
             EntityResolutionEngine()
         )
@@ -146,7 +189,13 @@ class DiscoveryServices:
             )
         )
 
-        self.company_id_allocator = SequentialCompanyIdAllocator()
+        #
+        # Company registry
+        #
+
+        self.company_id_allocator = (
+            SequentialCompanyIdAllocator()
+        )
 
         self.factory = CompanyFactory(
             id_allocator=self.company_id_allocator,
@@ -173,8 +222,23 @@ class DiscoveryServices:
             )
         )
 
+        #
+        # Authoritative discovery pipeline
+        #
+
+        self.discovery_pipeline = DiscoveryPipeline(
+            crawler=self.crawl_engine,
+            enricher=self.enrichment_engine,
+            persistence=self.persistence,
+            processor=self.batch_processor,
+        )
+
+        #
+        # Crawling execution subsystem
+        #
+
         self.crawling = CrawlingServices(
-            crawl_engine=self.crawl_engine,
+            pipeline=self.discovery_pipeline,
             listing_builder=self.url_builder,
             workers=workers,
         )

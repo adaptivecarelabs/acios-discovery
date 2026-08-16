@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -19,18 +19,10 @@ from acios_discovery.infrastructure.persistence.mappers.company_mapper import (
     CompanyMapper,
 )
 from acios_discovery.infrastructure.persistence.orm import (
-    AddressORM,
-    CategoryORM,
-    CityORM,
     CompanyAliasORM,
     CompanyORM,
     EmailORM,
-    PaymentMethodORM,
     PhoneNumberORM,
-    ProductTypeORM,
-    SocialLinkORM,
-    SourceORM,
-    StateORM,
     WebsiteORM,
 )
 
@@ -199,17 +191,25 @@ class SqlAlchemyCompanyRepository(CompanyRepository):
         Return the number of registered companies.
         """
 
-        stmt = select(
-            CompanyORM.id,
+        stmt = (
+            select(
+                func.count(),
+            )
+            .select_from(
+                CompanyORM,
+            )
         )
 
         result = await self._session.execute(
             stmt,
         )
 
-        return len(
-            result.scalars().all(),
+        return int(
+            result.scalar_one(),
         )
+
+
+
 
     async def clear(
         self,

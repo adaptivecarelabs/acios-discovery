@@ -8,6 +8,9 @@ from .company_repository import (
 from .discovery_repository import (
     SqlAlchemyDiscoveryRepository,
 )
+from .outbox_repository import (
+    SqlAlchemyOutboxRepository,
+)
 
 
 class PersistenceRepositories:
@@ -30,6 +33,12 @@ class PersistenceRepositories:
 
         self.discovery = (
             SqlAlchemyDiscoveryRepository(
+                session,
+            )
+        )
+
+        self.outbox = (
+            SqlAlchemyOutboxRepository(
                 session,
             )
         )

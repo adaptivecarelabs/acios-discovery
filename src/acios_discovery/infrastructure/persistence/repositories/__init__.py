@@ -8,7 +8,6 @@ from .discovery_repository import (
     SqlAlchemyDiscoveryRepository,
 )
 
-
 __all__ = [
     "PersistenceRepositories",
     "SqlAlchemyCompanyRepository",

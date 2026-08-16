@@ -14,8 +14,10 @@ SRC_ROOT = PROJECT_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from acios_discovery.infrastructure.persistence.metadata import Base
-from acios_discovery.infrastructure.persistence import orm
+from acios_discovery.infrastructure.persistence import (  # noqa: E402
+    load_metadata,  # noqa: F401
+)
+from acios_discovery.infrastructure.persistence.metadata import Base  # noqa: E402
 
 config = context.config
 load_dotenv()

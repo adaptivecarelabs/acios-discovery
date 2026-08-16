@@ -156,6 +156,12 @@ class Company:
             discovery.source,
         )
 
+        if (
+            self.description is None
+            and discovery.description is not None
+        ):
+            self.description = discovery.description
+
         self.social_links.update(
             discovery.social_links,
         )

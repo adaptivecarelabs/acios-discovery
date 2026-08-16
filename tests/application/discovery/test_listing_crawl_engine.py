@@ -83,13 +83,9 @@ async def test_engine_returns_result() -> None:
 
     connector.next_page_url.return_value = None
 
-    repository = Mock()
-    repository.save = AsyncMock()
-
     engine = ListingCrawlEngine(
         downloader=downloader,
         connector=connector,
-        repository=repository,
         url_builder=make_builder(),
     )
 
@@ -124,7 +120,7 @@ async def test_engine_returns_result() -> None:
 
 
 @pytest.mark.asyncio
-async def test_engine_saves_records() -> None:
+async def test_engine_returns_discovered_records() -> None:
 
     downloader = AsyncMock()
 
@@ -154,13 +150,9 @@ async def test_engine_saves_records() -> None:
 
     connector.next_page_url.return_value = None
 
-    repository = Mock()
-    repository.save = AsyncMock()
-
     engine = ListingCrawlEngine(
         downloader=downloader,
         connector=connector,
-        repository=repository,
         url_builder=make_builder(),
     )
 
@@ -175,15 +167,10 @@ async def test_engine_saves_records() -> None:
     )
 
     assert (
-        repository.save.await_count
-        == 3
-    )
-
-    assert (
         result.companies_discovered
         == 3
     )
-
+    assert result.records == records
     assert result.pages_crawled == 1
 
 
@@ -228,13 +215,9 @@ async def test_engine_follows_connector_next_url() -> None:
         None,
     ]
 
-    repository = Mock()
-    repository.save = AsyncMock()
-
     engine = ListingCrawlEngine(
         downloader=downloader,
         connector=connector,
-        repository=repository,
         url_builder=make_builder(),
     )
 
@@ -254,11 +237,6 @@ async def test_engine_follows_connector_next_url() -> None:
 
     assert (
         downloader.download.call_count
-        == 3
-    )
-
-    assert (
-        repository.save.await_count
         == 3
     )
 
@@ -302,13 +280,9 @@ async def test_engine_passes_current_url_to_next_page_parser() -> None:
 
     connector.next_page_url.return_value = None
 
-    repository = Mock()
-    repository.save = AsyncMock()
-
     engine = ListingCrawlEngine(
         downloader=downloader,
         connector=connector,
-        repository=repository,
         url_builder=make_builder(),
     )
 
@@ -356,13 +330,9 @@ async def test_engine_stops_on_pagination_loop() -> None:
         "https://example.com/page-2"
     )
 
-    repository = Mock()
-    repository.save = AsyncMock()
-
     engine = ListingCrawlEngine(
         downloader=downloader,
         connector=connector,
-        repository=repository,
         url_builder=make_builder(),
     )
 
@@ -402,13 +372,9 @@ async def test_engine_starts_from_job_page() -> None:
 
     connector.next_page_url.return_value = None
 
-    repository = Mock()
-    repository.save = AsyncMock()
-
     engine = ListingCrawlEngine(
         downloader=downloader,
         connector=connector,
-        repository=repository,
         url_builder=make_builder(),
     )
 

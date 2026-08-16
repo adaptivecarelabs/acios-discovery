@@ -5,13 +5,14 @@ import pytest
 from acios_discovery.domain.discovery.context import DiscoveryContext
 from acios_discovery.domain.discovery.models import RawDiscovery
 from acios_discovery.domain.discovery.record import DiscoveryRecord
+from acios_discovery.domain.sources import Source
 
 
 @pytest.fixture
-def sample_discovery_record() -> DiscoveryRecord:
+def discovery_record() -> DiscoveryRecord:
     return DiscoveryRecord(
         context=DiscoveryContext(
-            source="finelib",
+            source=Source.FINELIB,
             state="Lagos",
             city="Lagos",
             category="Healthcare",

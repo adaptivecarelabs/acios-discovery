@@ -11,9 +11,6 @@ from acios_discovery.application.planning.builders.listing_url_builder import (
 )
 from acios_discovery.application.planning.models import CrawlPlan
 from acios_discovery.domain.crawling import CrawlJob
-from acios_discovery.domain.discovery.repository import (
-    DiscoveryRepository,
-)
 from acios_discovery.infrastructure.connectors.finelib.connector import (
     FinelibConnector,
 )
@@ -22,11 +19,21 @@ from acios_discovery.shared.logging import logger
 
 class ListingCrawlEngine:
     """
-    Executes one CrawlJob.
+    Executes one CrawlJob and discovers records from listing pages.
 
-    The engine operates at execution time. It receives a CrawlJob,
-    reconstructs the corresponding listing URL, crawls listing
-    pages, persists discovered records, and returns crawl statistics.
+    This engine is deliberately responsible only for crawling.
+
+    Persistence is handled by DiscoveryPipeline through
+    DiscoveryPersistenceService.
+
+    The engine therefore:
+        1. Builds the initial listing URL.
+        2. Downloads listing pages.
+        3. Parses listing pages.
+        4. Follows pagination.
+        5. Returns discovered records.
+
+    It does NOT persist records.
     """
 
     def __init__(
@@ -34,12 +41,10 @@ class ListingCrawlEngine:
         *,
         downloader: ListingDownloader,
         connector: FinelibConnector,
-        repository: DiscoveryRepository,
         url_builder: ListingUrlBuilder,
     ) -> None:
         self._downloader = downloader
         self._connector = connector
-        self._repository = repository
         self._url_builder = url_builder
 
     async def execute(
@@ -99,9 +104,7 @@ class ListingCrawlEngine:
                 current_url,
             )
 
-            for record in records:
-                await self._repository.save(record)
-                all_records.append(record)
+            all_records.extend(records)
 
             companies += len(records)
             pages += 1

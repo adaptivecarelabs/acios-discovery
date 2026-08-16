@@ -9,6 +9,9 @@ from acios_discovery.application.company.company_merge_service import (
 from acios_discovery.application.company.discovery_company_registry_service import (
     DiscoveryCompanyRegistryService,
 )
+from acios_discovery.application.company.sequential_company_id_allocator import (
+    SequentialCompanyIdAllocator,
+)
 from acios_discovery.application.resolution.entity_resolution_engine import (
     EntityResolutionEngine,
 )
@@ -22,11 +25,6 @@ from acios_discovery.domain.sources import Source
 from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
     InMemoryCompanyRepository,
 )
-from acios_discovery.application.company.sequential_company_id_allocator import (
-    SequentialCompanyIdAllocator,
-)
-
-
 
 
 def make_discovery(

@@ -8,13 +8,21 @@ from acios_discovery.application.discovery.detail_enrichment_engine import (
 from acios_discovery.application.enrichment.finelib_enricher import (
     FinelibEnricher,
 )
-from acios_discovery.domain.discovery.context import DiscoveryContext
-from acios_discovery.domain.discovery.models import RawDiscovery
-from acios_discovery.domain.discovery.record import DiscoveryRecord
+from acios_discovery.domain.discovery.context import (
+    DiscoveryContext,
+)
+from acios_discovery.domain.discovery.models import (
+    RawDiscovery,
+)
+from acios_discovery.domain.discovery.record import (
+    DiscoveryRecord,
+)
 from acios_discovery.domain.discovery.repository import (
     DiscoveryRepository,
 )
-from acios_discovery.domain.sources import Source
+from acios_discovery.domain.sources import (
+    Source,
+)
 
 
 def make_record() -> DiscoveryRecord:
@@ -35,8 +43,7 @@ def make_record() -> DiscoveryRecord:
 
 
 @pytest.mark.asyncio
-async def test_engine_returns_record():
-
+async def test_engine_returns_record() -> None:
     enricher = AsyncMock(
         spec=FinelibEnricher,
     )
@@ -54,15 +61,23 @@ async def test_engine_returns_record():
 
     enricher.enrich.return_value = record
 
-    result = await engine.enrich(record)
+    result = await engine.enrich(
+        record,
+    )
 
     assert result is record
 
+    enricher.enrich.assert_awaited_once_with(
+        record,
+    )
+
+    repository.save.assert_awaited_once_with(
+        record,
+    )
 
 
 @pytest.mark.asyncio
-async def test_engine_downloads_detail_page():
-
+async def test_engine_downloads_detail_page() -> None:
     enricher = AsyncMock(
         spec=FinelibEnricher,
     )
@@ -80,8 +95,14 @@ async def test_engine_downloads_detail_page():
 
     enricher.enrich.return_value = record
 
-    await engine.enrich(record)
+    await engine.enrich(
+        record,
+    )
 
     enricher.enrich.assert_awaited_once_with(
+        record,
+    )
+
+    repository.save.assert_awaited_once_with(
         record,
     )

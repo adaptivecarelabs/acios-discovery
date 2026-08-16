@@ -12,7 +12,7 @@ class DiscoveryBatchProcessor:
     Processes a collection of discoveries.
 
     The processor itself contains no business rules.
-    It simply delegates each discovery to DiscoveryProcessor.
+    It delegates each discovery to DiscoveryProcessor.
     """
 
     def __init__(
@@ -25,7 +25,6 @@ class DiscoveryBatchProcessor:
         self,
         discoveries: list[RawDiscovery],
     ) -> list[Company]:
-
         companies: list[Company] = []
 
         for discovery in discoveries:

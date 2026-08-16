@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from acios_discovery.domain.company.company_id import CompanyId
-
 from acios_discovery.application.company.company_id_allocator import (
     CompanyIdAllocator,
 )
+from acios_discovery.domain.company.company_id import CompanyId
 
 
 class SequentialCompanyIdAllocator(CompanyIdAllocator):

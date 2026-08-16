@@ -5,6 +5,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -18,6 +19,14 @@ from acios_discovery.infrastructure.persistence.metadata import Base
 class DiscoveryORM(Base):
 
     __tablename__ = "discoveries"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "source",
+            "detail_url",
+            name="uq_discoveries_source_detail_url",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(
         primary_key=True,

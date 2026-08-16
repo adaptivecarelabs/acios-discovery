@@ -1,7 +1,6 @@
+import pytest
 from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
     AsyncSession,
-    async_sessionmaker,
 )
 
 from acios_discovery.domain.discovery.context import (
@@ -24,16 +23,26 @@ def make_record(
     name: str = "Test Company",
     address: str = "1 Test Street, Lagos",
     page_number: int = 1,
+    detail_url: str | None = None,
 ) -> DiscoveryRecord:
+
+    if detail_url is None:
+        slug = (
+            name.lower()
+            .replace(" ", "-")
+            .replace(",", "")
+        )
+
+        detail_url = (
+            "https://www.finelib.com/"
+            f"listing/{slug}/12345/"
+        )
 
     return DiscoveryRecord(
         company=RawDiscovery(
             source=Source.FINELIB.value,
             business_name=name,
-            detail_url=(
-                "https://www.finelib.com/"
-                "listing/test-company/12345/"
-            ),
+            detail_url=detail_url,
             address=address,
             description="A test discovery.",
             phone_numbers=[
@@ -78,28 +87,21 @@ def make_record(
         ),
     )
 
-
 def make_repository(
-    test_engine: AsyncEngine,
+    db_session: AsyncSession,
 ) -> SqlAlchemyDiscoveryRepository:
 
-    session_factory = async_sessionmaker(
-        bind=test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-    )
-
     return SqlAlchemyDiscoveryRepository(
-        session_factory=session_factory,
+        db_session,
     )
 
 
 async def test_save_and_count(
-    test_engine: AsyncEngine,
+    db_session: AsyncSession,
 ) -> None:
 
     repository = make_repository(
-        test_engine,
+        db_session,
     )
 
     record = make_record()
@@ -112,11 +114,11 @@ async def test_save_and_count(
 
 
 async def test_save_and_exists(
-    test_engine: AsyncEngine,
+    db_session: AsyncSession,
 ) -> None:
 
     repository = make_repository(
-        test_engine,
+        db_session,
     )
 
     record = make_record()
@@ -135,22 +137,38 @@ async def test_save_and_exists(
 
 
 async def test_list_all(
-    test_engine: AsyncEngine,
+    db_session: AsyncSession,
 ) -> None:
 
     repository = make_repository(
-        test_engine,
+        db_session,
     )
 
     first = make_record(
         name="Company One",
+        detail_url=(
+        "https://www.finelib.com/"
+        "listing/company-one/12345/"
+         ),
     )
 
     second = make_record(
         name="Company Two",
+        detail_url=(
+        "https://www.finelib.com/"
+        "listing/company-two/67890/"
+        ),
     )
 
     await repository.save(first)
+    print("FIRST NAME:", first.company.business_name)
+    print("FIRST SOURCE:", first.company.source)
+    print("FIRST URL:", first.company.detail_url)
+
+    print("SECOND NAME:", second.company.business_name)
+    print("SECOND SOURCE:", second.company.source)
+    print("SECOND URL:", second.company.detail_url)
+
     await repository.save(second)
 
     records = await repository.list_all()
@@ -169,11 +187,11 @@ async def test_list_all(
 
 
 async def test_update(
-    test_engine: AsyncEngine,
+    db_session: AsyncSession,
 ) -> None:
 
     repository = make_repository(
-        test_engine,
+        db_session,
     )
 
     record = make_record()
@@ -204,11 +222,11 @@ async def test_update(
 
 
 async def test_update_missing_record_raises(
-    test_engine: AsyncEngine,
+    db_session: AsyncSession,
 ) -> None:
 
     repository = make_repository(
-        test_engine,
+        db_session,
     )
 
     record = make_record()
@@ -224,11 +242,11 @@ async def test_update_missing_record_raises(
 
 
 async def test_clear(
-    test_engine: AsyncEngine,
+    db_session: AsyncSession,
 ) -> None:
 
     repository = make_repository(
-        test_engine,
+        db_session,
     )
 
     await repository.save(
@@ -248,3 +266,66 @@ async def test_clear(
     await repository.clear()
 
     assert await repository.count() == 0
+
+
+@pytest.mark.asyncio
+async def test_discovery_round_trip(
+    db_session,
+    discovery_record,
+):
+    repository = SqlAlchemyDiscoveryRepository(
+        db_session,
+    )
+
+    await repository.save(
+        discovery_record,
+    )
+
+    await db_session.commit()
+
+    records = await repository.list_all()
+
+    assert len(records) == 1
+
+    saved = records[0]
+
+    assert (
+        saved.company.business_name
+        == discovery_record.company.business_name
+    )
+
+    assert (
+        saved.company.detail_url
+        == discovery_record.company.detail_url
+    )
+
+    assert (
+        saved.context.city
+        == discovery_record.context.city
+    )
+
+
+@pytest.mark.asyncio
+async def test_saving_same_discovery_does_not_create_duplicate(
+    db_session,
+    discovery_record,
+):
+    repository = SqlAlchemyDiscoveryRepository(
+        db_session,
+    )
+
+    await repository.save(
+        discovery_record,
+    )
+
+    await db_session.flush()
+
+    await repository.save(
+        discovery_record,
+    )
+
+    await db_session.flush()
+
+    count = await repository.count()
+
+    assert count == 1
