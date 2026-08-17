@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from acios_discovery.domain.company.company_id import CompanyId
 from acios_discovery.domain.discovery.record import (
     DiscoveryRecord,
 )
@@ -110,11 +113,7 @@ class SqlAlchemyDiscoveryRepository(
 
         await self._session.execute(
             stmt,
-        )
-
-
-
-        
+        )    
 
 
     async def update(
@@ -153,6 +152,47 @@ class SqlAlchemyDiscoveryRepository(
             orm,
             record,
         )
+
+
+
+    async def resolve(
+        self,
+        record: DiscoveryRecord,
+        company_id: CompanyId,
+        resolved_at: datetime,
+    ) -> None:
+        """
+        Associate an existing discovery with its canonical company.
+        """
+
+        stmt = (
+            select(DiscoveryORM)
+            .where(
+                DiscoveryORM.source
+                == str(record.company.source),
+                DiscoveryORM.detail_url
+                == record.company.detail_url,
+            )
+        )
+
+        result = await self._session.execute(
+            stmt,
+        )
+
+        orm = result.scalar_one_or_none()
+
+        if orm is None:
+            raise ValueError(
+                "Discovery does not exist: "
+                f"{record.company.business_name}",
+            )
+
+        orm.resolved_company_id = company_id.value
+        orm.resolution_status = "RESOLVED"
+        orm.resolved_at = resolved_at
+
+
+
 
     async def exists(
         self,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import traceback
 
 from acios_discovery.application.crawling.crawl_worker import (
     CrawlWorker,
@@ -16,9 +17,6 @@ from acios_discovery.application.discovery.listing_crawl_result import (
 )
 from acios_discovery.application.events.in_memory_event_publisher import (
     InMemoryEventPublisher,
-)
-from acios_discovery.application.metrics.crawl_metrics_service import (
-    CrawlMetricsService,
 )
 from acios_discovery.domain.crawling import CrawlJob
 from acios_discovery.domain.events.company_discovered_event import (
@@ -39,6 +37,10 @@ class ConcurrentWorkerPool:
 
     Every worker consumes jobs from the same queue until
     the queue becomes empty.
+
+    A failure in one crawl job is recorded and does not
+    terminate the worker. The worker continues consuming
+    subsequent jobs from the queue.
     """
 
     def __init__(
@@ -46,13 +48,16 @@ class ConcurrentWorkerPool:
         *,
         queue: JobQueue,
         worker_factory: CrawlWorkerFactory,
-        metrics: CrawlMetricsService,
         publisher: InMemoryEventPublisher,
         workers: int = 4,
     ) -> None:
+        if workers < 1:
+            raise ValueError(
+                "workers must be greater than zero",
+            )
+
         self._queue = queue
         self._worker_factory = worker_factory
-        self._metrics = metrics
         self._publisher = publisher
         self._workers = workers
 
@@ -80,23 +85,27 @@ class ConcurrentWorkerPool:
 
                     async with lock:
                         result.jobs_processed += 1
-
                         result.pages_crawled += (
                             crawl_result.pages_crawled
                         )
-
                         result.companies_discovered += (
                             crawl_result.companies_discovered
                         )
 
-                        await self._publish_crawl_events(
-                            job=job,
-                            crawl_result=crawl_result,
-                        )
+                    await self._publish_crawl_events(
+                        job=job,
+                        crawl_result=crawl_result,
+                    )
 
                 except Exception:
                     async with lock:
                         result.jobs_failed += 1
+
+                    traceback.print_exc()
+
+                    # A failed job must not kill the worker.
+                    # Continue consuming the remaining queue.
+                    continue
 
         await asyncio.gather(
             *[

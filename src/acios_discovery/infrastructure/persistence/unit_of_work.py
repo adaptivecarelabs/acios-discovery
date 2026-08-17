@@ -14,9 +14,9 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
     """
     SQLAlchemy implementation of the application UnitOfWork.
 
-    All repositories are bound to the same AsyncSession, so
-    operations performed through the repositories participate
-    in the same database transaction.
+    All repositories are bound to the same AsyncSession, so operations
+    performed through the repositories participate in the same
+    database transaction.
     """
 
     def __init__(
@@ -39,6 +39,18 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
 
         self.company_repository = (
             repositories.company
+        )
+
+        self.crawl_session_repository = (
+            repositories.crawl_session
+        )
+
+        self.crawl_checkpoint_repository = (
+            repositories.crawl_checkpoint
+        )
+
+        self.crawl_job_repository = (
+            repositories.crawl_job
         )
 
     async def commit(self) -> None:

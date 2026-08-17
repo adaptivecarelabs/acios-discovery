@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from acios_discovery.application.crawling.crawl_worker import (
@@ -10,9 +12,28 @@ from acios_discovery.domain.crawling import CrawlJob
 from acios_discovery.domain.sources import Source
 
 
+class FakeSession:
+    def __init__(self) -> None:
+        self.committed = False
+
+    async def __aenter__(self) -> FakeSession:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type,
+        exc,
+        tb,
+    ) -> None:
+        return None
+
+    async def commit(self) -> None:
+        self.committed = True
+
+
 class FakePipeline:
     def __init__(self) -> None:
-        self.calls = []
+        self.calls: list[CrawlJob] = []
 
     async def execute(
         self,
@@ -32,9 +53,11 @@ class FakePipeline:
 @pytest.mark.asyncio
 async def test_worker_executes_one_job() -> None:
     pipeline = FakePipeline()
+    session = FakeSession()
 
     worker = CrawlWorker(
-        pipeline=pipeline,
+        session_factory=lambda: session,  # type: ignore[arg-type]
+        pipeline_factory=lambda _session: pipeline,
     )
 
     job = CrawlJob(
@@ -53,3 +76,5 @@ async def test_worker_executes_one_job() -> None:
     assert len(pipeline.calls) == 1
     assert pipeline.calls[0] is job
     assert pipeline.calls[0].city == "Yaba"
+
+    assert session.committed is True

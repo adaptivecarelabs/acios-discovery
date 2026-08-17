@@ -4,9 +4,6 @@ from acios_discovery.application.crawling.supervision.crawl_supervisor import (
 from acios_discovery.application.crawling.worker_pool_result import (
     WorkerPoolResult,
 )
-from acios_discovery.application.metrics.crawl_metrics_service import (
-    CrawlMetricsService,
-)
 from acios_discovery.domain.crawling.crawl_session import (
     CrawlSession,
 )
@@ -27,16 +24,24 @@ class FakeWorkerPool:
         )
 
 
+class WorkerPoolWithJobFailures:
+    async def execute(self):
+        return WorkerPoolResult(
+            workers=4,
+            jobs_processed=8,
+            jobs_failed=2,
+            pages_crawled=10,
+            companies_discovered=30,
+            completed=True,
+        )
+
 
 class FailingWorkerPool:
     async def execute(self):
         raise RuntimeError("worker pool failed")
 
 
-
 async def test_supervisor_fails_session_when_worker_pool_raises():
-    metrics = CrawlMetricsService()
-
     session = CrawlSession(
         id="session-failed",
     )
@@ -44,7 +49,6 @@ async def test_supervisor_fails_session_when_worker_pool_raises():
     supervisor = CrawlSupervisor(
         session=session,
         worker_pool=FailingWorkerPool(),
-        metrics=metrics,
     )
 
     try:
@@ -61,20 +65,7 @@ async def test_supervisor_fails_session_when_worker_pool_raises():
     assert session.finished_at is not None
 
 
-
-
 async def test_supervisor_uses_worker_pool_result():
-    metrics = CrawlMetricsService()
-
-    # Deliberately make metrics disagree with the worker result.
-    for _ in range(99):
-        metrics.record_job_processed()
-
-    for _ in range(99):
-        metrics.record_page()
-
-    metrics.record_company(999)
-
     session = CrawlSession(
         id="session-1",
     )
@@ -82,7 +73,6 @@ async def test_supervisor_uses_worker_pool_result():
     supervisor = CrawlSupervisor(
         session=session,
         worker_pool=FakeWorkerPool(),
-        metrics=metrics,
     )
 
     result = await supervisor.run()
@@ -99,3 +89,23 @@ async def test_supervisor_uses_worker_pool_result():
     assert session.jobs_failed == 2
     assert session.pages_crawled == 12
     assert session.companies_discovered == 36
+
+
+async def test_supervisor_completes_session_when_jobs_individually_fail():
+    session = CrawlSession(
+        id="session-partial",
+    )
+
+    supervisor = CrawlSupervisor(
+        session=session,
+        worker_pool=WorkerPoolWithJobFailures(),
+    )
+
+    result = await supervisor.run()
+
+    assert result.jobs_processed == 8
+    assert result.jobs_failed == 2
+
+    assert session.status is CrawlSessionStatus.COMPLETED
+    assert session.jobs_completed == 8
+    assert session.jobs_failed == 2

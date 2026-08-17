@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime
+
+from acios_discovery.domain.company.company_id import CompanyId
 from acios_discovery.domain.discovery import (
     DiscoveryRepository,
 )
@@ -17,6 +20,11 @@ class InMemoryDiscoveryRepository(
             DiscoveryRecord,
         ] = {}
 
+        self._resolutions: dict[
+            str,
+            tuple[CompanyId, datetime],
+        ] = {}
+
     def _key(
         self,
         record: DiscoveryRecord,
@@ -25,7 +33,7 @@ class InMemoryDiscoveryRepository(
         if record.company.detail_url is None:
             raise ValueError(
                 "Discovery has no detail URL."
-        )
+            )
 
         return record.company.detail_url
 
@@ -43,9 +51,35 @@ class InMemoryDiscoveryRepository(
         record: DiscoveryRecord,
     ) -> None:
 
-        self._records[
-            self._key(record)
-        ] = record
+        key = self._key(record)
+
+        if key not in self._records:
+            raise ValueError(
+                "Discovery record does not exist: "
+                f"{record.company.business_name}"
+            )
+
+        self._records[key] = record
+
+    async def resolve(
+        self,
+        record: DiscoveryRecord,
+        company_id: CompanyId,
+        resolved_at: datetime,
+    ) -> None:
+
+        key = self._key(record)
+
+        if key not in self._records:
+            raise ValueError(
+                "Discovery does not exist: "
+                f"{record.company.business_name}"
+            )
+
+        self._resolutions[key] = (
+            company_id,
+            resolved_at,
+        )
 
     async def exists(
         self,
@@ -75,3 +109,4 @@ class InMemoryDiscoveryRepository(
     ) -> None:
 
         self._records.clear()
+        self._resolutions.clear()

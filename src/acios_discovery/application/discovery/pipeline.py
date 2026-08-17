@@ -95,4 +95,5 @@ class DiscoveryPipeline:
                 crawl_result.pages_crawled
             ),
             source=job.source.value,
+            records=enriched_records,
         )

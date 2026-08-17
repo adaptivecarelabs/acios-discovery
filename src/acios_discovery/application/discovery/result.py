@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from acios_discovery.domain.discovery.record import (
+    DiscoveryRecord,
+)
+
 
 @dataclass(slots=True, frozen=True)
 class DiscoveryRunResult:
@@ -15,6 +19,10 @@ class DiscoveryRunResult:
     records_found: int = 0
     records_saved: int = 0
     duplicates: int = 0
+
+    records: list[DiscoveryRecord] = field(
+        default_factory=list,
+    )
 
     errors: list[str] = field(
         default_factory=list,

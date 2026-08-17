@@ -46,7 +46,9 @@ class DiscoveryORM(Base):
         default="PENDING",
     )
 
-    resolved_at: Mapped[datetime | None]
+    resolved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+    )
 
     source: Mapped[str]
 

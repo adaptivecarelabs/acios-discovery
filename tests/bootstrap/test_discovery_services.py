@@ -39,6 +39,8 @@ def test_discovery_services_builds_complete_graph() -> None:
     #
 
     assert services.category_provider is not None
+    assert services.city_provider is not None
+    assert services.plan_generator is not None
     assert services.url_builder is not None
 
     #
@@ -88,3 +90,9 @@ def test_discovery_services_builds_complete_graph() -> None:
     assert services.crawling.submission_service is not None
     assert services.crawling.worker_pool is not None
     assert services.crawling.supervisor is not None
+
+    #
+    # Discovery execution
+    #
+
+    assert services.execution_service is not None

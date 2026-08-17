@@ -9,9 +9,6 @@ from acios_discovery.application.discovery.listing_crawl_result import (
 from acios_discovery.application.events.in_memory_event_publisher import (
     InMemoryEventPublisher,
 )
-from acios_discovery.application.metrics.crawl_metrics_service import (
-    CrawlMetricsService,
-)
 from acios_discovery.domain.crawling import CrawlJob
 from acios_discovery.domain.discovery.context import DiscoveryContext
 from acios_discovery.domain.discovery.models import RawDiscovery
@@ -67,10 +64,21 @@ class EventRecorder:
         self.events.append(event)
 
 
+class PartiallyFailingWorker:
+    async def execute(self, job):
+        if job.listing_url.endswith("/2"):
+            raise RuntimeError("crawl failed")
+
+        return ListingCrawlResult(
+            pages_crawled=1,
+            companies_discovered=2,
+            records=[],
+        )
+
+
 @pytest.mark.asyncio
 async def test_pool_processes_jobs():
     queue = InMemoryJobQueue()
-    metrics = CrawlMetricsService()
     publisher = InMemoryEventPublisher()
 
     for i in range(10):
@@ -87,7 +95,6 @@ async def test_pool_processes_jobs():
     pool = ConcurrentWorkerPool(
         queue=queue,
         worker_factory=lambda: FakeWorker(),
-        metrics=metrics,
         publisher=publisher,
         workers=4,
     )
@@ -114,7 +121,6 @@ async def test_pool_publishes_events():
         recorder,
     )
 
-    metrics = CrawlMetricsService()
 
     for i in range(10):
         await queue.enqueue(
@@ -130,7 +136,6 @@ async def test_pool_publishes_events():
     pool = ConcurrentWorkerPool(
         queue=queue,
         worker_factory=lambda: FakeWorker(),
-        metrics=metrics,
         publisher=publisher,
         workers=4,
     )
@@ -201,3 +206,58 @@ async def test_pool_publishes_events():
         )
         for event in company_events
     )
+
+
+
+@pytest.mark.asyncio
+async def test_pool_records_failed_jobs_and_continues() -> None:
+    queue = InMemoryJobQueue()
+    publisher = InMemoryEventPublisher()
+
+    for i in range(5):
+        await queue.enqueue(
+            CrawlJob(
+                source=Source.FINELIB,
+                listing_url=f"https://example.com/{i}",
+                state="Lagos",
+                city="Yaba",
+                category_slug="restaurants",
+            )
+        )
+
+    pool = ConcurrentWorkerPool(
+        queue=queue,
+        worker_factory=lambda: PartiallyFailingWorker(),
+        publisher=publisher,
+        workers=2,
+    )
+
+    result = await pool.execute()
+
+    assert result.completed is True
+    assert result.jobs_processed == 4
+    assert result.jobs_failed == 1
+    assert result.pages_crawled == 4
+    assert result.companies_discovered == 8
+
+
+@pytest.mark.asyncio
+async def test_pool_completes_when_queue_is_empty() -> None:
+    queue = InMemoryJobQueue()
+    publisher = InMemoryEventPublisher()
+
+    pool = ConcurrentWorkerPool(
+        queue=queue,
+        worker_factory=lambda: FakeWorker(),
+        publisher=publisher,
+        workers=4,
+    )
+
+    result = await pool.execute()
+
+    assert result.completed is True
+    assert result.workers == 4
+    assert result.jobs_processed == 0
+    assert result.jobs_failed == 0
+    assert result.pages_crawled == 0
+    assert result.companies_discovered == 0

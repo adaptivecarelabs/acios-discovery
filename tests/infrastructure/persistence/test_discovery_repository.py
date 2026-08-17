@@ -1,8 +1,13 @@
+from datetime import UTC, datetime
+
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
 )
 
+from acios_discovery.domain.company.company import Company
+from acios_discovery.domain.company.company_id import CompanyId
 from acios_discovery.domain.discovery.context import (
     DiscoveryContext,
 )
@@ -13,6 +18,12 @@ from acios_discovery.domain.discovery.record import (
     DiscoveryRecord,
 )
 from acios_discovery.domain.sources import Source
+from acios_discovery.infrastructure.persistence.orm.discovery import (
+    DiscoveryORM,
+)
+from acios_discovery.infrastructure.persistence.repositories.company_repository import (
+    SqlAlchemyCompanyRepository,
+)
 from acios_discovery.infrastructure.persistence.repositories.discovery_repository import (
     SqlAlchemyDiscoveryRepository,
 )
@@ -329,3 +340,74 @@ async def test_saving_same_discovery_does_not_create_duplicate(
     count = await repository.count()
 
     assert count == 1
+
+
+
+@pytest.mark.asyncio
+async def test_resolve_updates_existing_discovery(
+    db_session: AsyncSession,
+    discovery_record: DiscoveryRecord,
+) -> None:
+    discovery_repository = SqlAlchemyDiscoveryRepository(
+        db_session,
+    )
+
+    company_repository = SqlAlchemyCompanyRepository(
+        db_session,
+    )
+
+    await discovery_repository.save(
+        discovery_record,
+    )
+
+    company_id = CompanyId(
+        "ACL-COM-00000001",
+    )
+
+    company = Company(
+        id=company_id,
+        canonical_name="Drugstoc EHub Ltd",
+    )
+
+    await company_repository.add(
+        company,
+    )
+
+    await db_session.flush()
+
+    resolved_at = datetime.now(UTC)
+
+    await discovery_repository.resolve(
+        discovery_record,
+        company_id,
+        resolved_at,
+    )
+
+    await db_session.flush()
+
+    stmt = select(
+        DiscoveryORM,
+    ).where(
+        DiscoveryORM.source
+        == str(discovery_record.company.source),
+        DiscoveryORM.detail_url
+        == discovery_record.company.detail_url,
+    )
+
+    result = await db_session.execute(
+        stmt,
+    )
+
+    row = result.scalar_one()
+
+    assert row.resolved_company_id == (
+        "ACL-COM-00000001"
+    )
+
+    assert row.resolution_status == (
+        "RESOLVED"
+    )
+
+    assert row.resolved_at is not None
+
+    assert row.resolved_at == resolved_at

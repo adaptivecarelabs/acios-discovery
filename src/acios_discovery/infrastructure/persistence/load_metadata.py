@@ -1,10 +1,8 @@
 """
 Imports every ORM model so SQLAlchemy registers every table.
 
-Nothing in this file executes business logic.
-
-Simply importing each ORM class ensures
-Base.metadata.create_all() knows about every table.
+Importing ORM classes is intentionally side-effect free with respect
+to business logic. It only registers their tables with Base.metadata.
 """
 
 from acios_discovery.infrastructure.persistence.orm import (
@@ -12,8 +10,12 @@ from acios_discovery.infrastructure.persistence.orm import (
     CategoryORM,
     CityORM,
     CompanyORM,
+    CrawlCheckpointORM,
+    CrawlJobORM,
+    CrawlSessionORM,
     DiscoveryORM,
     EmailORM,
+    OutboxEventORM,
     PaymentMethodORM,
     PhoneNumberORM,
     ProductTypeORM,
@@ -28,8 +30,12 @@ __all__ = [
     "CategoryORM",
     "CityORM",
     "CompanyORM",
+    "CrawlCheckpointORM",
+    "CrawlJobORM",
+    "CrawlSessionORM",
     "DiscoveryORM",
     "EmailORM",
+    "OutboxEventORM",
     "PaymentMethodORM",
     "PhoneNumberORM",
     "ProductTypeORM",
@@ -37,4 +43,5 @@ __all__ = [
     "SourceORM",
     "StateORM",
     "WebsiteORM",
+    "CrawlCheckpointORM",
 ]

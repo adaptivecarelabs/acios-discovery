@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 
+from acios_discovery.domain.company.company_id import CompanyId
 from acios_discovery.domain.discovery.record import DiscoveryRecord
 
 
@@ -20,6 +22,18 @@ class DiscoveryRepository(ABC):
         self,
         record: DiscoveryRecord,
     ) -> None:
+        ...
+
+    @abstractmethod
+    async def resolve(
+        self,
+        record: DiscoveryRecord,
+        company_id: CompanyId,
+        resolved_at: datetime,
+    ) -> None:
+        """
+        Associate a persisted discovery with its canonical company.
+        """
         ...
 
     @abstractmethod

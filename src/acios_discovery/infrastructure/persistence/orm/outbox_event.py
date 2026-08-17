@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, Integer, Text
+from sqlalchemy import DateTime, Index, Integer, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -20,6 +20,23 @@ class OutboxEventORM(Base):
     """
 
     __tablename__ = "outbox_events"
+
+    __table_args__ = (
+        Index(
+            "ix_outbox_events_unpublished",
+            "published_at",
+            "created_at",
+        ),
+        Index(
+            "ix_outbox_events_event_type",
+            "event_type",
+        ),
+        Index(
+            "ix_outbox_events_aggregate",
+            "aggregate_type",
+            "aggregate_id",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(
         PostgreSQLUUID(as_uuid=True),

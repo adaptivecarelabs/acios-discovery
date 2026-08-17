@@ -3,6 +3,9 @@ from .category import CategoryORM
 from .city import CityORM
 from .company import CompanyORM
 from .company_alias import CompanyAliasORM
+from .crawl_checkpoint import CrawlCheckpointORM
+from .crawl_job import CrawlJobORM
+from .crawl_session import CrawlSessionORM
 from .discovery import DiscoveryORM
 from .email import EmailORM
 from .outbox_event import OutboxEventORM
@@ -30,4 +33,7 @@ __all__ = [
     "WebsiteORM",
     "CompanyAliasORM",
     "OutboxEventORM",
+    "CrawlJobORM",
+    "CrawlSessionORM",
+    "CrawlCheckpointORM",
 ]

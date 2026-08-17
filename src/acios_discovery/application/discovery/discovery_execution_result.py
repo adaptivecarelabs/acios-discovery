@@ -4,20 +4,19 @@ from dataclasses import dataclass
 
 
 @dataclass(slots=True)
-class CrawlSupervisorResult:
+class DiscoveryExecutionResult:
     """
-    Overall result produced after a crawl session
-    has completed.
+    Result of executing one planned discovery operation.
     """
 
-    session_id: str
+    plans_generated: int
 
-    workers: int
+    jobs_submitted: int
 
     jobs_processed: int
-
-    jobs_failed: int
 
     pages_crawled: int
 
     companies_discovered: int
+
+    workers: int
