@@ -65,6 +65,8 @@ class SqlAlchemyCompanyRepository(CompanyRepository):
             selectinload(CompanyORM.cities),
             selectinload(CompanyORM.states),
             selectinload(CompanyORM.sources),
+            selectinload(CompanyORM.scalar_provenance_rows),
+            selectinload(CompanyORM.set_provenance_rows),
         )
 
     # ------------------------------------------------------------------

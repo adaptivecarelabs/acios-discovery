@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from acios_discovery.application.discovery.discovery_persistence_service import (
     DiscoveryPersistenceService,
 )
+from acios_discovery.application.events.outbox_relay import OutboxRelay
 from acios_discovery.domain.discovery.context import DiscoveryContext
 from acios_discovery.domain.discovery.models import RawDiscovery
 from acios_discovery.domain.discovery.record import DiscoveryRecord
@@ -15,6 +16,9 @@ from acios_discovery.infrastructure.persistence.orm.discovery import (
 )
 from acios_discovery.infrastructure.persistence.orm.outbox_event import (
     OutboxEventORM,
+)
+from acios_discovery.infrastructure.persistence.repositories.outbox_repository import (
+    SqlAlchemyOutboxRepository,
 )
 from acios_discovery.infrastructure.persistence.unit_of_work import (
     SqlAlchemyUnitOfWork,
@@ -54,6 +58,16 @@ class FailingOutboxRepository:
         raise RuntimeError(
             "Simulated outbox persistence failure"
         )
+
+
+class RecordingPublisher:
+
+    def __init__(self) -> None:
+        self.published: list = []
+
+    async def publish(self, message) -> None:
+        self.published.append(message)
+
 
 
 async def persist_record(
@@ -227,3 +241,47 @@ async def test_discovery_is_rolled_back_when_outbox_persistence_fails(
 
     assert discovery_count == 0
     assert outbox_count == 0
+
+
+
+async def test_relay_drains_a_real_outbox_message(
+    db_session: AsyncSession,
+) -> None:
+
+    record = make_discovery_record()
+
+    await persist_record(
+        db_session,
+        record,
+    )
+
+    repository = SqlAlchemyOutboxRepository(db_session)
+    publisher = RecordingPublisher()
+
+    relay = OutboxRelay(
+        repository=repository,
+        publisher=publisher,
+    )
+
+    published_count = await relay.poll_once()
+
+    await db_session.flush()
+
+    assert published_count == 1
+    assert len(publisher.published) == 1
+    assert publisher.published[0].event_type == "CompanyDiscoveredEvent"
+
+    outbox_row = (
+        await db_session.scalars(
+            select(OutboxEventORM).where(
+                OutboxEventORM.event_type == "CompanyDiscoveredEvent",
+            )
+        )
+    ).one()
+
+    assert outbox_row.published_at is not None
+
+    # A second poll should find nothing left to publish.
+    second_published_count = await relay.poll_once()
+
+    assert second_published_count == 0

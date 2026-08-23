@@ -4,9 +4,6 @@ from .company_repository import (
 from .container import (
     PersistenceRepositories,
 )
-from .crawl_checkpoint_repository import (
-    SqlAlchemyCrawlCheckpointRepository,
-)
 from .crawl_job_repository import (
     SqlAlchemyCrawlJobRepository,
 )
@@ -22,6 +19,5 @@ __all__ = [
     "SqlAlchemyCompanyRepository",
     "SqlAlchemyDiscoveryRepository",
     "SqlAlchemyCrawlSessionRepository",
-    "SqlAlchemyCrawlCheckpointRepository",
     "SqlAlchemyCrawlJobRepository",
 ]

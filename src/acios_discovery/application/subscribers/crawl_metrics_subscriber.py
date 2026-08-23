@@ -12,6 +12,8 @@ from acios_discovery.domain.events.job_completed_event import (
 from acios_discovery.domain.events.page_crawled_event import (
     PageCrawledEvent,
 )
+from acios_discovery.domain.events.job_failed_event import JobFailedEvent
+from acios_discovery.domain.events.job_retried_event import JobRetriedEvent
 
 
 class CrawlMetricsSubscriber:
@@ -49,3 +51,15 @@ class CrawlMetricsSubscriber:
             CompanyDiscoveredEvent,
         ):
             self._metrics.record_company()
+
+        elif isinstance(
+            event,
+            JobRetriedEvent,
+        ):
+            self._metrics.record_retry()
+
+        elif isinstance(
+            event,
+            JobFailedEvent,
+        ):
+            self._metrics.record_failure()

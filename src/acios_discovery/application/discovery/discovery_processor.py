@@ -4,14 +4,14 @@ from acios_discovery.application.company.discovery_company_registry_service impo
     DiscoveryCompanyRegistryService,
 )
 from acios_discovery.domain.company.company import Company
-from acios_discovery.domain.discovery.models import RawDiscovery
+from acios_discovery.domain.discovery.record import DiscoveryRecord
 from acios_discovery.shared.logging import logger
 
 
 class DiscoveryProcessor:
     """
     High-level application service responsible for processing
-    a single RawDiscovery into the Company Registry.
+    a single DiscoveryRecord into the Company Registry.
 
     It delegates all registry logic to
     DiscoveryCompanyRegistryService.
@@ -26,11 +26,13 @@ class DiscoveryProcessor:
     async def process(
         self,
         *,
-        discovery: RawDiscovery,
+        record: DiscoveryRecord,
     ) -> Company:
         """
-        Register a discovery and return the resulting Company.
+        Register a discovery record and return the resulting Company.
         """
+
+        discovery = record.company
 
         logger.info(
             "Processing discovery %s",
@@ -38,16 +40,16 @@ class DiscoveryProcessor:
         )
 
         company = await self._registry_service.register(
-            discovery=discovery,
+            record=record,
         )
 
         logger.info(
             """
-            EMAIL      : %s
-            WEBSITE    : %s
-            SOCIALS    : %s
-            PRODUCTS   : %s
-            PAYMENTS   : %s
+            EMAIL : %s
+            WEBSITE : %s
+            SOCIALS : %s
+            PRODUCTS : %s
+            PAYMENTS : %s
             """,
             discovery.email,
             discovery.website,

@@ -19,3 +19,5 @@ def _require_database_url() -> str:
 
 
 DATABASE_URL: str = _require_database_url()
+
+WEBSHARE_API_KEY: str | None = os.getenv("WEBSHARE_API_KEY")

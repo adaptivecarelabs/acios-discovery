@@ -26,6 +26,8 @@ class MetricsSnapshot:
 
     successful_requests: int
 
+    http_failures: int
+
     duration_seconds: float
 
     pages_per_second: float

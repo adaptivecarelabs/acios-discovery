@@ -4,15 +4,15 @@ from acios_discovery.application.discovery.discovery_processor import (
     DiscoveryProcessor,
 )
 from acios_discovery.domain.company.company import Company
-from acios_discovery.domain.discovery.models import RawDiscovery
+from acios_discovery.domain.discovery.record import DiscoveryRecord
 
 
 class DiscoveryBatchProcessor:
     """
-    Processes a collection of discoveries.
+    Processes a collection of discovery records.
 
     The processor itself contains no business rules.
-    It delegates each discovery to DiscoveryProcessor.
+    It delegates each record to DiscoveryProcessor.
     """
 
     def __init__(
@@ -23,13 +23,13 @@ class DiscoveryBatchProcessor:
 
     async def process(
         self,
-        discoveries: list[RawDiscovery],
+        records: list[DiscoveryRecord],
     ) -> list[Company]:
         companies: list[Company] = []
 
-        for discovery in discoveries:
+        for record in records:
             company = await self._processor.process(
-                discovery=discovery,
+                record=record,
             )
 
             companies.append(company)

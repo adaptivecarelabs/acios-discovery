@@ -222,3 +222,24 @@ async def test_mark_failed_missing_message_raises(
             missing_id,
             "Something failed",
         )
+
+
+@pytest.mark.asyncio
+async def test_get_unpublished_populates_attempts(
+    db_session: AsyncSession,
+) -> None:
+    repository = make_repository(db_session)
+
+    message = make_message()
+
+    await repository.add(message)
+    await db_session.flush()
+
+    await repository.mark_failed(message.id, "first failure")
+    await repository.mark_failed(message.id, "second failure")
+    await db_session.flush()
+
+    messages = await repository.get_unpublished()
+
+    assert len(messages) == 1
+    assert messages[0].attempts == 2

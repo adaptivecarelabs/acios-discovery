@@ -9,6 +9,10 @@ class DiscoveryExecutionResult:
     Result of executing one planned discovery operation.
     """
 
+    session_id: str
+
+    resumed: bool
+
     plans_generated: int
 
     jobs_submitted: int

@@ -106,3 +106,27 @@ async def test_factory_copies_description():
     assert company.description == (
         "A healthcare technology company."
     )
+
+
+async def test_factory_records_provenance_at_founding_confidence():
+
+    factory = make_factory()
+
+    company = await factory.create(
+        discovery=make_discovery(),
+    )
+
+    assert company.scalar_provenance["description"].confidence == 100.0
+    assert company.scalar_provenance["description"].source == Source.FINELIB
+
+    assert "08030000000" in company.set_provenance["phone_numbers"]
+
+    assert (
+        company.set_provenance["phone_numbers"]["08030000000"].confidence
+        == 100.0
+    )
+
+    assert (
+        company.set_provenance["phone_numbers"]["08030000000"].source
+        == Source.FINELIB
+    )

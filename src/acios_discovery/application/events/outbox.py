@@ -14,3 +14,4 @@ class OutboxMessage:
     payload: dict
     occurred_at: datetime
     created_at: datetime
+    attempts: int = 0

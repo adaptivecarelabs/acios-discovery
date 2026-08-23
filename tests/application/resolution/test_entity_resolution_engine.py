@@ -147,3 +147,78 @@ def test_alias_matches(engine: EntityResolutionEngine):
     )
 
     assert score == pytest.approx(60.0)
+
+
+
+def test_exact_normalized_name_match_is_full_confidence(
+    engine: EntityResolutionEngine,
+):
+    """
+    Regression test for the Me Cure Healthcare production incident.
+
+    An incoming discovery whose name normalizes to exactly the
+    same canonical name as an existing company must score as a
+    full-confidence match, even with zero corroborating phone,
+    email, website, or address signals. Without this, an exact
+    name match can score as low as NAME_WEIGHT (60), which falls
+    below the STRONG_MATCH threshold (80) and causes the registry
+    to attempt creating a duplicate company, colliding with the
+    canonical_name unique constraint.
+    """
+
+    discovery = make_discovery("Me Cure Healthcare")
+
+    company = make_company("ME CURE HEALTHCARE")
+
+    score = engine.confidence(discovery, company)
+
+    assert score == 100.0
+
+
+def test_exact_normalized_name_match_wins_even_with_conflicting_signals(
+    engine: EntityResolutionEngine,
+):
+    """
+    An exact canonical name match should win even when the
+    discovery's other fields point at DIFFERENT existing data
+    (e.g. a different phone number or website domain on file) —
+    this mirrors the real incident where the discovery's email/
+    website domain (.com) differed from what was already stored
+    for the company (.com.ng).
+    """
+
+    discovery = make_discovery(
+        "Me Cure Healthcare",
+        phone="08129910710",
+        website="https://www.mecure.com",
+    )
+
+    company = make_company(
+        "ME CURE HEALTHCARE",
+        phone="08110095954",
+        website="https://mecure.com.ng",
+    )
+
+    score = engine.confidence(discovery, company)
+
+    assert score == 100.0
+
+
+def test_fuzzy_name_without_corroboration_stays_below_strong_match(
+    engine: EntityResolutionEngine,
+):
+    """
+    Guardrail: the exact-match shortcut must NOT loosen fuzzy
+    matching. A similar-but-not-identical name with no
+    corroborating signals should still fall below the
+    STRONG_MATCH threshold, exactly as before this fix.
+    """
+
+    discovery = make_discovery("Mee Cure Health Care")
+
+    company = make_company("ME CURE HEALTHCARE")
+
+    score = engine.confidence(discovery, company)
+
+    assert score < 80.0
+

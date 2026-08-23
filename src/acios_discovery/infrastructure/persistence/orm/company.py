@@ -140,3 +140,15 @@ class CompanyORM(Base):
         back_populates="company",
         cascade="all, delete-orphan",
     )
+
+    scalar_provenance_rows = relationship(
+        "CompanyScalarFieldProvenanceORM",
+        back_populates="company",
+        cascade="all, delete-orphan",
+    )
+
+    set_provenance_rows = relationship(
+        "CompanySetFieldProvenanceORM",
+        back_populates="company",
+        cascade="all, delete-orphan",
+    )

@@ -40,6 +40,9 @@ class CrawlMetricsService:
     def record_success(self) -> None:
         self._metrics.successful_requests += 1
 
+    def record_http_failure(self) -> None:
+        self._metrics.http_failures += 1
+
     def finish(self) -> None:
         self._metrics.finished_at = datetime.now(UTC)
 
@@ -65,6 +68,7 @@ class CrawlMetricsService:
             retries=self._metrics.retries,
             failures=self._metrics.failures,
             successful_requests=self._metrics.successful_requests,
+            http_failures=self._metrics.http_failures,
             duration_seconds=duration,
             pages_per_second=(
                 self._metrics.pages_crawled
@@ -94,6 +98,7 @@ class CrawlMetricsService:
             retries=snapshot.retries,
             failures=snapshot.failures,
             successful_requests=snapshot.successful_requests,
+            http_failures=snapshot.http_failures,
         )
 
     

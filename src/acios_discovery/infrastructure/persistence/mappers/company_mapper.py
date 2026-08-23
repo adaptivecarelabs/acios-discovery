@@ -9,12 +9,15 @@ from acios_discovery.application.normalization.company_lookup import (
 )
 from acios_discovery.domain.company.company import Company
 from acios_discovery.domain.company.company_id import CompanyId
+from acios_discovery.domain.company.field_provenance import FieldProvenance
 from acios_discovery.infrastructure.persistence.orm import (
     AddressORM,
     CategoryORM,
     CityORM,
     CompanyAliasORM,
     CompanyORM,
+    CompanyScalarFieldProvenanceORM,
+    CompanySetFieldProvenanceORM,
     EmailORM,
     PaymentMethodORM,
     PhoneNumberORM,
@@ -105,7 +108,6 @@ class CompanyMapper:
         #
         # Classification
         #
-
         orm.categories = [
             CategoryORM(value=value)
             for value in sorted(company.categories)
@@ -143,9 +145,6 @@ class CompanyMapper:
         #
         # Social links
         #
-        # Temporary implementation.
-        # We'll improve SocialLinkORM shortly.
-        #
 
         orm.social_links = [
             SocialLinkORM(
@@ -155,10 +154,35 @@ class CompanyMapper:
             in sorted(company.social_links.items())
         ]
 
+        #
+        # Field provenance
+        #
+
+        orm.scalar_provenance_rows = [
+            CompanyScalarFieldProvenanceORM(
+                field_name=field_name,
+                source=provenance.source,
+                detail_url=provenance.detail_url,
+                confidence=provenance.confidence,
+                observed_at=provenance.observed_at,
+            )
+            for field_name, provenance in company.scalar_provenance.items()
+        ]
+
+        orm.set_provenance_rows = [
+            CompanySetFieldProvenanceORM(
+                field_name=field_name,
+                value=value,
+                source=provenance.source,
+                detail_url=provenance.detail_url,
+                confidence=provenance.confidence,
+                observed_at=provenance.observed_at,
+            )
+            for field_name, values in company.set_provenance.items()
+            for value, provenance in values.items()
+        ]
+
         return orm
-
-
-
 
     @staticmethod
     def to_domain(
@@ -190,7 +214,6 @@ class CompanyMapper:
             row.value
             for row in orm.aliases
         )
-
 
         company.emails.update(
             row.value
@@ -250,10 +273,6 @@ class CompanyMapper:
             for row in orm.payment_methods
         )
 
-        #
-        # Temporary social link parsing.
-        #
-
         for row in orm.social_links:
 
             if "|" not in row.value:
@@ -266,8 +285,32 @@ class CompanyMapper:
 
             company.social_links[platform] = url
 
-        return company
+        #
+        # Field provenance
+        #
 
+        for row in orm.scalar_provenance_rows:
+
+            company.scalar_provenance[row.field_name] = FieldProvenance(
+                source=row.source,
+                detail_url=row.detail_url,
+                confidence=row.confidence,
+                observed_at=row.observed_at,
+            )
+
+        for row in orm.set_provenance_rows:
+
+            company.set_provenance.setdefault(
+                row.field_name,
+                {},
+            )[row.value] = FieldProvenance(
+                source=row.source,
+                detail_url=row.detail_url,
+                confidence=row.confidence,
+                observed_at=row.observed_at,
+            )
+
+        return company
 
     @staticmethod
     def _sync_collection(
@@ -294,19 +337,11 @@ class CompanyMapper:
 
         wanted = set(new_values)
 
-        #
-        # Remove deleted values
-        #
-
         orm_collection[:] = [
             item
             for item in orm_collection
             if item.value in wanted
         ]
-
-        #
-        # Add missing values
-        #
 
         for value in sorted(
             wanted - existing.keys(),
@@ -326,7 +361,112 @@ class CompanyMapper:
                 )
             )
 
-            
+    @staticmethod
+    def _sync_scalar_provenance(
+        orm: CompanyORM,
+        company: Company,
+    ) -> None:
+        """
+        Synchronize scalar field provenance rows.
+
+        One row per field_name. Existing rows are updated
+        in place so their primary key is preserved; rows for
+        fields no longer tracked are removed.
+        """
+
+        wanted_fields = set(company.scalar_provenance.keys())
+
+        orm.scalar_provenance_rows[:] = [
+            row
+            for row in orm.scalar_provenance_rows
+            if row.field_name in wanted_fields
+        ]
+
+        existing = {
+            row.field_name: row
+            for row in orm.scalar_provenance_rows
+        }
+
+        for field_name, provenance in company.scalar_provenance.items():
+
+            row = existing.get(field_name)
+
+            if row is None:
+
+                orm.scalar_provenance_rows.append(
+                    CompanyScalarFieldProvenanceORM(
+                        field_name=field_name,
+                        source=provenance.source,
+                        detail_url=provenance.detail_url,
+                        confidence=provenance.confidence,
+                        observed_at=provenance.observed_at,
+                    )
+                )
+
+            else:
+
+                row.source = provenance.source
+                row.detail_url = provenance.detail_url
+                row.confidence = provenance.confidence
+                row.observed_at = provenance.observed_at
+
+    @staticmethod
+    def _sync_set_provenance(
+        orm: CompanyORM,
+        company: Company,
+    ) -> None:
+        """
+        Synchronize set-field provenance rows.
+
+        One row per (field_name, value). Existing rows are
+        updated in place; rows for combinations no longer
+        present are removed.
+        """
+
+        wanted = {
+            (field_name, value)
+            for field_name, values in company.set_provenance.items()
+            for value in values
+        }
+
+        orm.set_provenance_rows[:] = [
+            row
+            for row in orm.set_provenance_rows
+            if (row.field_name, row.value) in wanted
+        ]
+
+        existing = {
+            (row.field_name, row.value): row
+            for row in orm.set_provenance_rows
+        }
+
+        for field_name, values in company.set_provenance.items():
+
+            for value, provenance in values.items():
+
+                key = (field_name, value)
+
+                row = existing.get(key)
+
+                if row is None:
+
+                    orm.set_provenance_rows.append(
+                        CompanySetFieldProvenanceORM(
+                            field_name=field_name,
+                            value=value,
+                            source=provenance.source,
+                            detail_url=provenance.detail_url,
+                            confidence=provenance.confidence,
+                            observed_at=provenance.observed_at,
+                        )
+                    )
+
+                else:
+
+                    row.source = provenance.source
+                    row.detail_url = provenance.detail_url
+                    row.confidence = provenance.confidence
+                    row.observed_at = provenance.observed_at
 
     @classmethod
     def update_orm(
@@ -340,7 +480,7 @@ class CompanyMapper:
         """
 
         orm.canonical_name = company.canonical_name
-        orm.canonical_name_normalized=normalize_company_name(
+        orm.canonical_name_normalized = normalize_company_name(
             company.canonical_name,
         )
         orm.description = company.description
@@ -361,7 +501,6 @@ class CompanyMapper:
             CompanyAliasORM,
             normalize_company_alias,
         )
-
         cls._sync_collection(
             orm.emails,
             company.emails,
@@ -433,10 +572,6 @@ class CompanyMapper:
             PaymentMethodORM,
         )
 
-        #
-        # Temporary social link handling.
-        #
-
         cls._sync_collection(
             orm.social_links,
             {
@@ -445,4 +580,18 @@ class CompanyMapper:
                 in company.social_links.items()
             },
             SocialLinkORM,
+        )
+
+        #
+        # Field provenance
+        #
+
+        cls._sync_scalar_provenance(
+            orm,
+            company,
+        )
+
+        cls._sync_set_provenance(
+            orm,
+            company,
         )

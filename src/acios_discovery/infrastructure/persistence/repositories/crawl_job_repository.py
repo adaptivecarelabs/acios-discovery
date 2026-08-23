@@ -37,10 +37,34 @@ class SqlAlchemyCrawlJobRepository(CrawlJobRepository):
         *,
         session_id: str,
     ) -> None:
-        orm = await self._session.get(
-            CrawlJobORM,
-            job.id,
+        """
+        Persist a crawl job.
+
+        Jobs are uniquely identified within a session by their
+        (session_id, source, state, city, category_slug) natural
+        key (see uq_crawl_jobs_session_plan). A resubmitted job
+        for a plan that previously failed carries a NEW CrawlJob.id
+        (CrawlJobFactory mints a fresh id per submission), so
+        looking up by primary key alone would miss the existing
+        row and attempt a second INSERT, violating the unique
+        constraint. Look up by the natural key first so retry/
+        resume correctly reuses and updates the existing row.
+        """
+
+        stmt = (
+            select(CrawlJobORM)
+            .where(
+                CrawlJobORM.session_id == session_id,
+                CrawlJobORM.source == str(job.source),
+                CrawlJobORM.state == job.state,
+                CrawlJobORM.city == job.city,
+                CrawlJobORM.category_slug == job.category_slug,
+            )
         )
+
+        result = await self._session.execute(stmt)
+
+        orm = result.scalar_one_or_none()
 
         now = datetime.now(UTC)
 
@@ -65,12 +89,13 @@ class SqlAlchemyCrawlJobRepository(CrawlJobRepository):
             self._session.add(orm)
             return
 
-        orm.session_id = session_id
-        orm.source = str(job.source)
+        # Reuse the existing row's identity. job.id may be a
+        # freshly-minted id from CrawlJobFactory if this is a
+        # resubmission; the persisted id must stay stable so it
+        # continues to match the row's primary key.
+        job.id = orm.id
+
         orm.listing_url = job.listing_url
-        orm.state = job.state
-        orm.city = job.city
-        orm.category_slug = job.category_slug
         orm.page = job.page
         orm.priority = int(job.priority)
         orm.retries = job.retries

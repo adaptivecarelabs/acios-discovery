@@ -26,3 +26,5 @@ class RuntimeMetricsSnapshot:
     failures: int
 
     successful_requests: int
+
+    http_failures: int

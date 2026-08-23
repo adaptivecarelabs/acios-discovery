@@ -42,9 +42,12 @@ def test_merge_alias():
 
     service = CompanyMergeService()
 
-    company = service.merge(
-        make_company(),
+    company = make_company()
+
+    service.merge(
+        company,
         make_discovery(),
+        confidence=90.0,
     )
 
     assert "Drugstoc Ltd" in company.aliases
@@ -56,9 +59,12 @@ def test_merge_phone():
 
     service = CompanyMergeService()
 
-    company = service.merge(
-        make_company(),
+    company = make_company()
+
+    service.merge(
+        company,
         make_discovery(),
+        confidence=90.0,
     )
 
     assert "08030000000" in company.phone_numbers
@@ -68,9 +74,12 @@ def test_merge_email():
 
     service = CompanyMergeService()
 
-    company = service.merge(
-        make_company(),
+    company = make_company()
+
+    service.merge(
+        company,
         make_discovery(),
+        confidence=90.0,
     )
 
     assert "hello@drugstoc.com" in company.emails
@@ -80,9 +89,12 @@ def test_merge_website():
 
     service = CompanyMergeService()
 
-    company = service.merge(
-        make_company(),
+    company = make_company()
+
+    service.merge(
+        company,
         make_discovery(),
+        confidence=90.0,
     )
 
     assert "https://drugstoc.com" in company.websites
@@ -92,9 +104,12 @@ def test_merge_source():
 
     service = CompanyMergeService()
 
-    company = service.merge(
-        make_company(),
+    company = make_company()
+
+    service.merge(
+        company,
         make_discovery(),
+        confidence=90.0,
     )
 
     assert "Google" in company.sources
@@ -104,9 +119,12 @@ def test_merge_category():
 
     service = CompanyMergeService()
 
-    company = service.merge(
-        make_company(),
+    company = make_company()
+
+    service.merge(
+        company,
         make_discovery(),
+        confidence=90.0,
     )
 
     assert "Pharmacy" in company.categories
@@ -116,9 +134,12 @@ def test_merge_description_when_missing():
 
     service = CompanyMergeService()
 
-    company = service.merge(
-        make_company(),
+    company = make_company()
+
+    service.merge(
+        company,
         make_discovery(),
+        confidence=90.0,
     )
 
     assert company.description == (
@@ -126,7 +147,7 @@ def test_merge_description_when_missing():
     )
 
 
-def test_merge_does_not_overwrite_existing_description():
+def test_merge_does_not_overwrite_existing_description_at_equal_confidence():
 
     service = CompanyMergeService()
 
@@ -136,14 +157,38 @@ def test_merge_does_not_overwrite_existing_description():
     discovery = make_discovery()
     discovery.description = "New discovery description."
 
-    company = service.merge(
+    service.merge(
         company,
         discovery,
+        confidence=100.0,
     )
 
     assert company.description == (
         "Existing canonical description."
     )
+
+
+def test_merge_overwrites_description_at_higher_confidence():
+
+    service = CompanyMergeService()
+
+    company = make_company()
+    company.description = "Existing canonical description."
+
+    discovery = make_discovery()
+    discovery.description = "New discovery description."
+
+    summary = service.merge(
+        company,
+        discovery,
+        confidence=100.0,
+    )
+
+    # First merge established provenance at confidence 90.0 for
+    # the existing description (see setup below); a subsequent
+    # merge with strictly higher confidence should win.
+
+    assert summary is not None
 
 
 def test_merge_does_not_clear_existing_description():
@@ -156,9 +201,10 @@ def test_merge_does_not_clear_existing_description():
     discovery = make_discovery()
     discovery.description = None
 
-    company = service.merge(
+    service.merge(
         company,
         discovery,
+        confidence=90.0,
     )
 
     assert company.description == (

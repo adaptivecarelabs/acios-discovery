@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy import text
 from acios_discovery.application.persistence.unit_of_work import (
     UnitOfWork,
 )
@@ -45,10 +45,6 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
             repositories.crawl_session
         )
 
-        self.crawl_checkpoint_repository = (
-            repositories.crawl_checkpoint
-        )
-
         self.crawl_job_repository = (
             repositories.crawl_job
         )
@@ -58,3 +54,31 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
 
     async def rollback(self) -> None:
         await self._session.rollback()
+
+
+    async def acquire_locks(
+        self,
+        keys: list[str],
+    ) -> None:
+        """
+        Acquire a Postgres transaction-scoped advisory lock for
+        each key, in the given order.
+
+        pg_advisory_xact_lock blocks until the lock is available
+        and releases automatically on COMMIT or ROLLBACK — no
+        manual unlock is needed, and it composes correctly with
+        this class's existing commit()/rollback().
+
+        Callers must pass keys in a deterministic, consistent
+        order (see build_resolution_lock_keys) to avoid deadlocks
+        between transactions that need overlapping key sets.
+        """
+
+        for key in keys:
+
+            await self._session.execute(
+                text(
+                    "SELECT pg_advisory_xact_lock(hashtext(:key)::bigint)",
+                ),
+                {"key": key},
+            )

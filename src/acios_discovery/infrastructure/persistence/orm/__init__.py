@@ -3,7 +3,8 @@ from .category import CategoryORM
 from .city import CityORM
 from .company import CompanyORM
 from .company_alias import CompanyAliasORM
-from .crawl_checkpoint import CrawlCheckpointORM
+from .company_scalar_field_provenance import CompanyScalarFieldProvenanceORM
+from .company_set_field_provenance import CompanySetFieldProvenanceORM
 from .crawl_job import CrawlJobORM
 from .crawl_session import CrawlSessionORM
 from .discovery import DiscoveryORM
@@ -16,6 +17,7 @@ from .social_link import SocialLinkORM
 from .source import SourceORM
 from .state import StateORM
 from .website import WebsiteORM
+from .company_id_sequence import company_id_sequence
 
 __all__ = [
     "AddressORM",
@@ -35,5 +37,7 @@ __all__ = [
     "OutboxEventORM",
     "CrawlJobORM",
     "CrawlSessionORM",
-    "CrawlCheckpointORM",
+    "CompanyScalarFieldProvenanceORM",
+    "CompanySetFieldProvenanceORM",
+    "company_id_sequence",
 ]

@@ -226,8 +226,8 @@ async def test_pipeline_passes_enriched_companies_to_processor(
 
     processor.process.assert_awaited_once_with(
         [
-            enriched_one.company,
-            enriched_two.company,
+            enriched_one,
+            enriched_two,
         ],
     )
 

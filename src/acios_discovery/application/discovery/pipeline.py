@@ -74,13 +74,8 @@ class DiscoveryPipeline:
 
             enriched_records.append(enriched)
 
-        discoveries = [
-            record.company
-            for record in enriched_records
-        ]
-
         await self._processor.process(
-            discoveries,
+            enriched_records,
         )
 
         return DiscoveryRunResult(

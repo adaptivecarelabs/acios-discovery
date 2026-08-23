@@ -30,3 +30,5 @@ class CrawlMetrics:
     failures: int = 0
 
     successful_requests: int = 0
+
+    http_failures: int = 0

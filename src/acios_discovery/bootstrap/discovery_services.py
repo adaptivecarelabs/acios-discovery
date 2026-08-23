@@ -14,9 +14,6 @@ from acios_discovery.application.company.company_merge_service import (
 from acios_discovery.application.company.discovery_company_registry_service import (
     DiscoveryCompanyRegistryService,
 )
-from acios_discovery.application.company.sequential_company_id_allocator import (
-    SequentialCompanyIdAllocator,
-)
 from acios_discovery.application.discovery.detail_enrichment_engine import (
     DetailEnrichmentEngine,
 )
@@ -92,8 +89,17 @@ from acios_discovery.infrastructure.persistence.repositories.container import (
 from acios_discovery.infrastructure.persistence.unit_of_work import (
     SqlAlchemyUnitOfWork,
 )
-
+from acios_discovery.infrastructure.persistence.repositories.sequence_company_id_allocator import (
+    SequenceCompanyIdAllocator,
+)
 from .crawling_services import CrawlingServices
+from acios_discovery.application.metrics.crawl_metrics_service import (
+    CrawlMetricsService,
+)
+from acios_discovery.infrastructure.http.metrics_recording_http_client import (
+    MetricsRecordingHttpClient,
+)
+
 
 
 class DiscoveryServices:
@@ -121,8 +127,24 @@ class DiscoveryServices:
         http: Any | None = None,
         planner: CrawlPlanGenerator | None = None,
         session_factory: Callable[[], AsyncSession] | None = None,
+        resume_session_id: str | None = None,
     ) -> None:
-        self.http = http or HttpxClient()
+        
+
+        #
+        # Metrics service is constructed here, before anything
+        # captures a reference to self.http — ListingDownloader
+        # and FinelibEnricher below capture self.http at
+        # construction time, so http must already be the
+        # metrics-wrapped instance by the time they're built.
+        #
+
+        self.metrics = CrawlMetricsService()
+
+        self.http = MetricsRecordingHttpClient(
+            client=http or HttpxClient(),
+            metrics=self.metrics,
+        )
 
 
         #
@@ -145,6 +167,10 @@ class DiscoveryServices:
 
         self.repositories = PersistenceRepositories(
             session,
+        )
+
+        self.unit_of_work = SqlAlchemyUnitOfWork(
+            session=session,
         )
 
         self.company_repository = (
@@ -235,9 +261,14 @@ class DiscoveryServices:
             EntityResolutionEngine()
         )
 
+
+        self.company_match_repository = (
+            self.repositories.company_match
+        )
+
         self.resolution_service = (
             EntityResolutionService(
-                repository=self.company_repository,
+                repository=self.company_match_repository,
                 engine=self.resolution_engine,
             )
         )
@@ -247,7 +278,9 @@ class DiscoveryServices:
         #
 
         self.company_id_allocator = (
-            SequentialCompanyIdAllocator()
+            SequenceCompanyIdAllocator(
+                session,
+            )
         )
 
         self.factory = CompanyFactory(
@@ -258,7 +291,7 @@ class DiscoveryServices:
 
         self.registry = (
             DiscoveryCompanyRegistryService(
-                repository=self.company_repository,
+                unit_of_work=self.unit_of_work,
                 resolution_service=self.resolution_service,
                 factory=self.factory,
                 merge_service=self.merge_service,
@@ -284,9 +317,7 @@ class DiscoveryServices:
         #
 
         self.persistence = DiscoveryPersistenceService(
-            unit_of_work=SqlAlchemyUnitOfWork(
-                session=session,
-            ),
+            unit_of_work=self.unit_of_work,
         )
 
         #
@@ -316,6 +347,8 @@ class DiscoveryServices:
             session_factory=self.session_factory,
             listing_builder=self.url_builder,
             workers=workers,
+            resume_session_id=resume_session_id,
+            metrics=self.metrics,
         )
 
         #
@@ -328,6 +361,8 @@ class DiscoveryServices:
                 self.crawling.submission_service
             ),
             crawl_supervisor=self.crawling.supervisor,
+            crawl_job_repository=self.repositories.crawl_job,
+            resume_session_id=resume_session_id,
         )
 
     def _build_pipeline(
@@ -349,6 +384,7 @@ class DiscoveryServices:
 
         discovery_repository = repositories.discovery
         company_repository = repositories.company
+        company_match_repository = repositories.company_match
 
         #
         # Enrichment
@@ -363,10 +399,12 @@ class DiscoveryServices:
         # Persistence
         #
 
+        unit_of_work = SqlAlchemyUnitOfWork(
+            session = session,
+        )
+
         persistence = DiscoveryPersistenceService(
-            unit_of_work=SqlAlchemyUnitOfWork(
-                session=session,
-            ),
+            unit_of_work=unit_of_work,
         )
 
         #
@@ -376,7 +414,7 @@ class DiscoveryServices:
         resolution_engine = EntityResolutionEngine()
 
         resolution_service = EntityResolutionService(
-            repository=company_repository,
+            repository=company_match_repository,
             engine=resolution_engine,
         )
 
@@ -385,7 +423,9 @@ class DiscoveryServices:
         #
 
         company_id_allocator = (
-            SequentialCompanyIdAllocator()
+            SequenceCompanyIdAllocator(
+                session,
+            )
         )
 
         factory = CompanyFactory(
@@ -395,7 +435,7 @@ class DiscoveryServices:
         merge_service = CompanyMergeService()
 
         registry = DiscoveryCompanyRegistryService(
-            repository=company_repository,
+            unit_of_work=unit_of_work,
             resolution_service=resolution_service,
             factory=factory,
             merge_service=merge_service,

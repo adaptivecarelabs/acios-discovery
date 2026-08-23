@@ -7,8 +7,8 @@ from acios_discovery.application.resolution.entity_resolution_engine import (
 from acios_discovery.application.resolution.resolution_result import (
     ResolutionResult,
 )
-from acios_discovery.domain.company.company_repository import (
-    CompanyRepository,
+from acios_discovery.domain.discovery.company_match_repository import (
+    CompanyMatchRepository,
 )
 from acios_discovery.domain.discovery.models import (
     RawDiscovery,
@@ -19,7 +19,7 @@ class EntityResolutionService:
 
     def __init__(
         self,
-        repository: CompanyRepository,
+        repository: CompanyMatchRepository,
         engine: EntityResolutionEngine,
     ) -> None:
 
@@ -32,7 +32,9 @@ class EntityResolutionService:
         discovery: RawDiscovery,
     ) -> ResolutionResult:
 
-        companies = await self._repository.list_all()
+        companies = await self._repository.candidates(
+            discovery,
+        )
 
         best_company = None
         best_score = 0.0

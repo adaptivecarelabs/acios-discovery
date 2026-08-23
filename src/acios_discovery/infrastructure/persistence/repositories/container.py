@@ -5,9 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .company_repository import (
     SqlAlchemyCompanyRepository,
 )
-from .crawl_checkpoint_repository import (
-    SqlAlchemyCrawlCheckpointRepository,
-)
 from .crawl_job_repository import (
     SqlAlchemyCrawlJobRepository,
 )
@@ -19,6 +16,9 @@ from .discovery_repository import (
 )
 from .outbox_repository import (
     SqlAlchemyOutboxRepository,
+)
+from .company_match_repository import (
+    SqlAlchemyCompanyMatchRepository,
 )
 
 
@@ -36,6 +36,12 @@ class PersistenceRepositories:
     ) -> None:
         self.company = (
             SqlAlchemyCompanyRepository(
+                session,
+            )
+        )
+
+        self.company_match = (
+            SqlAlchemyCompanyMatchRepository(
                 session,
             )
         )
@@ -58,11 +64,6 @@ class PersistenceRepositories:
             )
         )
 
-        self.crawl_checkpoint = (
-            SqlAlchemyCrawlCheckpointRepository(
-                session,
-            )
-        )
 
         self.crawl_job = (
             SqlAlchemyCrawlJobRepository(

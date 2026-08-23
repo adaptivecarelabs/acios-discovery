@@ -48,35 +48,21 @@ from acios_discovery.domain.crawling.crawl_session import (
 from acios_discovery.infrastructure.persistence.database import (
     SessionFactory,
 )
+from acios_discovery.infrastructure.persistence.session_scoped_crawl_persistence import (
+    SessionScopedCrawlSessionPersistence,
+)
 from acios_discovery.infrastructure.queue.in_memory_job_queue import (
     InMemoryJobQueue,
 )
+from acios_discovery.infrastructure.persistence.session_scoped_crawl_persistence import (
+    SessionScopedCrawlJobPersistence,
+)
+
 
 
 class CrawlingServices:
     """
     Composition root for the crawl execution subsystem.
-
-    The preferred execution model is:
-
-        job
-          |
-          v
-        CrawlWorker
-          |
-          +--> worker-specific AsyncSession
-          |
-          +--> worker-specific DiscoveryPipeline
-          |
-          v
-        database
-
-    Non-database infrastructure remains shared.
-
-    The optional ``pipeline`` argument is retained for compatibility
-    with isolated bootstrap tests and older callers. Production
-    execution should use ``pipeline_factory`` together with
-    ``session_factory``.
     """
 
     def __init__(
@@ -90,6 +76,8 @@ class CrawlingServices:
             AsyncSession,
         ] = SessionFactory,
         pipeline: DiscoveryPipeline | None = None,
+        resume_session_id: str | None = None,
+        metrics: CrawlMetricsService | None = None,
     ) -> None:
         self.queue = InMemoryJobQueue()
 
@@ -105,7 +93,7 @@ class CrawlingServices:
             scheduler=self.scheduler,
         )
 
-        self.metrics = CrawlMetricsService()
+        self.metrics = metrics or CrawlMetricsService()
 
         self.publisher = InMemoryEventPublisher()
 
@@ -116,22 +104,6 @@ class CrawlingServices:
         self.publisher.subscribe(
             self.metrics_subscriber,
         )
-
-        #
-        # Worker construction
-        #
-        # Preferred path:
-        #
-        #     pipeline_factory + session_factory
-        #
-        # Compatibility path:
-        #
-        #     pipeline=
-        #
-        # The compatibility pipeline is only used when explicitly
-        # supplied. The normal DiscoveryServices composition root
-        # always supplies a worker-specific pipeline factory.
-        #
 
         if pipeline_factory is None:
             if pipeline is None:
@@ -163,16 +135,42 @@ class CrawlingServices:
 
         self.worker_factory: CrawlWorkerFactory = create_worker
 
+        #
+        # Crawl session identity: reuse the resumed session's id
+        # if given, otherwise CrawlSession() generates a fresh one.
+        #
+        # Constructed before the worker pool so its id is
+        # available for log correlation inside the pool.
+        #
+
+        self.session = (
+            CrawlSession(id=resume_session_id)
+            if resume_session_id is not None
+            else CrawlSession()
+        )
+
+        self.job_persistence = SessionScopedCrawlJobPersistence(
+            session_factory,
+        )
+
         self.worker_pool = ConcurrentWorkerPool(
             queue=self.queue,
             worker_factory=self.worker_factory,
             publisher=self.publisher,
             workers=workers,
+            session_id=self.session.id,
+            job_persistence=self.job_persistence,
         )
 
-        self.session = CrawlSession()
+        self.session_persistence = (
+            SessionScopedCrawlSessionPersistence(
+                session_factory,
+            )
+        )
 
         self.supervisor = CrawlSupervisor(
             session=self.session,
             worker_pool=self.worker_pool,
+            session_persistence=self.session_persistence,
+            resumed=resume_session_id is not None,
         )

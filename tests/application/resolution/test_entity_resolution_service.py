@@ -14,6 +14,9 @@ from acios_discovery.domain.sources import Source
 from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
     InMemoryCompanyRepository,
 )
+from acios_discovery.infrastructure.repositories.in_memory_company_match_repository import (
+    InMemoryCompanyMatchRepository,
+)
 
 
 def make_company(
@@ -43,7 +46,7 @@ async def test_returns_no_match_when_repository_is_empty():
     repository = InMemoryCompanyRepository()
 
     service = EntityResolutionService(
-        repository=repository,
+        repository=InMemoryCompanyMatchRepository(repository),
         engine=EntityResolutionEngine(),
     )
 
@@ -77,7 +80,7 @@ async def test_detects_duplicate_by_name():
     )
 
     service = EntityResolutionService(
-        repository=repository,
+        repository=InMemoryCompanyMatchRepository(repository),
         engine=EntityResolutionEngine(),
     )
 
@@ -116,7 +119,7 @@ async def test_returns_best_candidate():
     await repository.add(company2)
 
     service = EntityResolutionService(
-        repository=repository,
+        repository=InMemoryCompanyMatchRepository(repository),
         engine=EntityResolutionEngine(),
     )
 
@@ -145,7 +148,7 @@ async def test_non_duplicate_when_similarity_is_low():
     )
 
     service = EntityResolutionService(
-        repository=repository,
+        repository=InMemoryCompanyMatchRepository(repository),
         engine=EntityResolutionEngine(),
     )
 
@@ -177,7 +180,7 @@ async def test_repository_candidates_are_used():
         )
 
     service = EntityResolutionService(
-        repository=repository,
+        repository=InMemoryCompanyMatchRepository(repository),
         engine=EntityResolutionEngine(),
     )
 
@@ -203,7 +206,7 @@ async def test_possible_match_is_not_duplicate():
     )
 
     service = EntityResolutionService(
-        repository=repository,
+        repository=InMemoryCompanyMatchRepository(repository),
         engine=EntityResolutionEngine(),
     )
 
@@ -222,3 +225,47 @@ async def test_possible_match_is_not_duplicate():
     }
 
     assert result.duplicate is False
+
+
+@pytest.mark.asyncio
+async def test_exact_canonical_name_match_is_duplicate_even_without_corroboration():
+    """
+    Regression test for the Me Cure Healthcare production incident.
+
+    An incoming discovery matching an existing company's exact
+    canonical name — but with no overlapping phone, email, or
+    website — must still resolve as a duplicate. Previously this
+    scored exactly NAME_WEIGHT (60.0), landing as POSSIBLE_MATCH
+    (duplicate=False), which caused the registry to attempt
+    creating a second company with the same canonical_name and
+    crash on the database's unique constraint.
+    """
+
+    repository = InMemoryCompanyRepository()
+
+    existing = make_company(
+        canonical_name="ME CURE HEALTHCARE",
+        phone="08110095954",
+        website="https://mecure.com.ng",
+    )
+
+    await repository.add(existing)
+
+    service = EntityResolutionService(
+        repository=InMemoryCompanyMatchRepository(repository),
+        engine=EntityResolutionEngine(),
+    )
+
+    incoming = RawDiscovery(
+        source=Source.FINELIB,
+        business_name="Me Cure Healthcare",
+        phone_numbers=["08129910710"],
+        website="https://www.mecure.com",
+    )
+
+    result = await service.resolve(incoming)
+
+    assert result.company is existing
+    assert result.duplicate is True
+    assert result.confidence == 100.0
+    assert result.match == EntityMatch.STRONG_MATCH

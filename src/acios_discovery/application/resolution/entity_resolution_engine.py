@@ -3,14 +3,14 @@ from __future__ import annotations
 from acios_discovery.application.normalization.canonical_business_name import (
     CanonicalBusinessNameNormalizer,
 )
-from acios_discovery.application.resolution.field_similarity import (
+from acios_discovery.domain.company.company import Company
+from acios_discovery.domain.discovery.models import RawDiscovery
+from acios_discovery.domain.shared.matching import (
     address_match,
     phone_match,
     same_domain,
     similarity,
 )
-from acios_discovery.domain.company.company import Company
-from acios_discovery.domain.discovery.models import RawDiscovery
 
 
 class EntityResolutionEngine:
@@ -50,6 +50,9 @@ class EntityResolutionEngine:
         discovery_name = self._normalizer.normalize(
             discovery.business_name,
         )
+
+        if discovery_name == company.canonical_name:
+            return 100.0
 
         names = {
             company.canonical_name,

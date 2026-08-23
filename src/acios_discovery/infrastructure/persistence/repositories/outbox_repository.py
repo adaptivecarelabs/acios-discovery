@@ -50,7 +50,8 @@ class SqlAlchemyOutboxRepository(
         stmt = (
             select(OutboxEventORM)
             .where(
-                OutboxEventORM.published_at.is_(None)
+                OutboxEventORM.published_at.is_(None),
+                OutboxEventORM.dead_lettered_at.is_(None),
             )
             .order_by(
                 OutboxEventORM.created_at,
@@ -73,6 +74,7 @@ class SqlAlchemyOutboxRepository(
                 payload=row.payload,
                 occurred_at=row.occurred_at,
                 created_at=row.created_at,
+                attempts=row.attempts,
             )
             for row in rows
         ]
@@ -124,3 +126,26 @@ class SqlAlchemyOutboxRepository(
 
         row.attempts += 1
         row.last_error = error
+
+    async def mark_dead_lettered(
+        self,
+        message_id: UUID,
+    ) -> None:
+        stmt = select(
+            OutboxEventORM,
+        ).where(
+            OutboxEventORM.id == message_id,
+        )
+
+        result = await self._session.execute(
+            stmt,
+        )
+
+        row = result.scalar_one_or_none()
+
+        if row is None:
+            raise ValueError(
+                f"Outbox event does not exist: {message_id}"
+            )
+
+        row.dead_lettered_at = datetime.now(UTC)

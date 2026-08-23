@@ -18,7 +18,19 @@ class CompanyFactory:
 
     Company identity is supplied by the configured
     CompanyIdAllocator.
+
+    Field values are established through the same
+    merge_discovery() path used for subsequent merges,
+    at full confidence, so a newly created company carries
+    provenance for every field exactly like a merged one.
     """
+
+    #
+    # A founding discovery has no competing value to weigh
+    # against, so it is recorded at maximum confidence.
+    #
+
+    FOUNDING_CONFIDENCE = 100.0
 
     def __init__(
         self,
@@ -40,82 +52,18 @@ class CompanyFactory:
 
         company_id = await self._id_allocator.allocate()
 
+        now = datetime.now(UTC)
+
         company = Company(
             id=company_id,
             canonical_name=canonical,
-            description=discovery.description,
-            first_seen=datetime.now(UTC),
-            last_seen=datetime.now(UTC),
+            first_seen=now,
+            last_seen=now,
         )
 
-        #
-        # Listing data
-        #
-
-        company.add_alias(
-            discovery.business_name,
-        )
-
-        for phone in discovery.phone_numbers:
-            company.add_phone(phone)
-
-        company.add_address(
-            discovery.address,
-        )
-
-        if discovery.category:
-            company.categories.add(
-                discovery.category,
-            )
-
-        if discovery.city:
-            company.cities.add(
-                discovery.city,
-            )
-
-        if discovery.state:
-            company.states.add(
-                discovery.state,
-            )
-
-        company.add_source(
-            discovery.source,
-        )
-
-        #
-        # Detail enrichment
-        #
-
-        company.add_email(
-            discovery.email,
-        )
-
-        company.add_website(
-            discovery.website,
-        )
-
-        company.social_links.update(
-            discovery.social_links,
-        )
-
-        company.product_types.update(
-            discovery.product_types,
-        )
-
-        company.payment_methods.update(
-            discovery.payment_methods,
-        )
-
-        company.year_founded = (
-            discovery.year_founded
-        )
-
-        company.employee_count = (
-            discovery.employee_count
-        )
-
-        company.business_locations = (
-            discovery.business_locations
+        company.merge_discovery(
+            discovery,
+            confidence=self.FOUNDING_CONFIDENCE,
         )
 
         return company

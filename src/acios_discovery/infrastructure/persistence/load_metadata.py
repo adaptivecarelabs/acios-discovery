@@ -10,7 +10,6 @@ from acios_discovery.infrastructure.persistence.orm import (
     CategoryORM,
     CityORM,
     CompanyORM,
-    CrawlCheckpointORM,
     CrawlJobORM,
     CrawlSessionORM,
     DiscoveryORM,
@@ -30,7 +29,6 @@ __all__ = [
     "CategoryORM",
     "CityORM",
     "CompanyORM",
-    "CrawlCheckpointORM",
     "CrawlJobORM",
     "CrawlSessionORM",
     "DiscoveryORM",
@@ -43,5 +41,4 @@ __all__ = [
     "SourceORM",
     "StateORM",
     "WebsiteORM",
-    "CrawlCheckpointORM",
 ]

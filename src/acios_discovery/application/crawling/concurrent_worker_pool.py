@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import traceback
 
 from acios_discovery.application.crawling.crawl_worker import (
     CrawlWorker,
@@ -19,16 +18,27 @@ from acios_discovery.application.events.in_memory_event_publisher import (
     InMemoryEventPublisher,
 )
 from acios_discovery.domain.crawling import CrawlJob
+from acios_discovery.domain.errors.crawl_errors import RetryableCrawlError
 from acios_discovery.domain.events.company_discovered_event import (
     CompanyDiscoveredEvent,
 )
 from acios_discovery.domain.events.job_completed_event import (
     JobCompletedEvent,
 )
+from acios_discovery.domain.events.job_failed_event import JobFailedEvent
+from acios_discovery.domain.events.job_retried_event import JobRetriedEvent
 from acios_discovery.domain.events.page_crawled_event import (
     PageCrawledEvent,
 )
 from acios_discovery.domain.queue.job_queue import JobQueue
+from acios_discovery.shared.logging import logger
+from acios_discovery.application.persistence.crawl_job_persistence import (
+    CrawlJobPersistence,
+)
+from acios_discovery.domain.crawling.status import CrawlStatus
+
+
+
 
 
 class ConcurrentWorkerPool:
@@ -38,8 +48,16 @@ class ConcurrentWorkerPool:
     Every worker consumes jobs from the same queue until
     the queue becomes empty.
 
-    A failure in one crawl job is recorded and does not
-    terminate the worker. The worker continues consuming
+    A job that fails with a RetryableCrawlError is retried in
+    place (same worker, same job) up to job.max_retries times —
+    NOT re-enqueued, because InMemoryJobQueue.dequeue() returns
+    None permanently once empty and every worker exits on that;
+    a retried job re-entering the queue after other workers have
+    already exited could be stranded with no consumer left.
+
+    Any other exception (including FatalCrawlError) fails the job
+    immediately with no retry. A failure in one job is recorded
+    and does not terminate the worker — it continues consuming
     subsequent jobs from the queue.
     """
 
@@ -50,6 +68,8 @@ class ConcurrentWorkerPool:
         worker_factory: CrawlWorkerFactory,
         publisher: InMemoryEventPublisher,
         workers: int = 4,
+        session_id: str | None = None,
+        job_persistence: CrawlJobPersistence | None = None,
     ) -> None:
         if workers < 1:
             raise ValueError(
@@ -60,6 +80,18 @@ class ConcurrentWorkerPool:
         self._worker_factory = worker_factory
         self._publisher = publisher
         self._workers = workers
+        self._session_id = session_id or "unknown"
+        self._job_persistence=job_persistence
+
+
+    async def _persist_job(self, job: CrawlJob) -> None:
+        if self._job_persistence is None:
+            return
+    
+        await self._job_persistence.save(
+            job,
+            session_id=self._session_id,
+        )
 
     async def execute(self) -> WorkerPoolResult:
         result = WorkerPoolResult(
@@ -68,6 +100,141 @@ class ConcurrentWorkerPool:
         )
 
         lock = asyncio.Lock()
+
+        async def run_job(
+            worker: CrawlWorker,
+            job: CrawlJob,
+        ) -> None:
+
+            attempt = 0
+
+            job.status = CrawlStatus.RUNNING
+            await self._persist_job(job)
+
+            while True:
+
+                try:
+                    crawl_result: ListingCrawlResult = (
+                        await worker.execute(job)
+                    )
+
+                except RetryableCrawlError as exc:
+
+                    attempt += 1
+
+                    if attempt <= job.max_retries:
+
+                        logger.warning(
+                            "Retryable error (session=%s job=%s "
+                            "city=%s category=%s page=%s) "
+                            "attempt %s/%s: %s",
+                            self._session_id,
+                            job.id,
+                            job.city,
+                            job.category_slug,
+                            job.page,
+                            attempt,
+                            job.max_retries,
+                            exc,
+                        )
+
+                        job.retries = attempt
+                        job.status = CrawlStatus.RETRYING
+
+                        await self._persist_job(job)
+
+                        await self._publisher.publish(
+                            JobRetriedEvent(
+                                job=job,
+                                attempt=attempt,
+                                max_retries=job.max_retries,
+                                error=str(exc),
+                            )
+                        )
+
+                        job.status = CrawlStatus.RUNNING
+                        continue
+
+                    logger.error(
+                        "Job exhausted retries (session=%s job=%s "
+                        "city=%s category=%s page=%s) after %s "
+                        "attempts: %s",
+                        self._session_id,
+                        job.id,
+                        job.city,
+                        job.category_slug,
+                        job.page,
+                        job.max_retries,
+                        exc,
+                    )
+
+                    job.status = CrawlStatus.FAILED
+
+                    await self._persist_job(job)
+
+                    async with lock:
+                        result.jobs_failed += 1
+
+                    await self._publisher.publish(
+                        JobFailedEvent(
+                            job=job,
+                            error=str(exc),
+                            retryable=True,
+                        )
+                    )
+
+                    return
+
+                except Exception as exc:
+
+                    logger.error(
+                        "Fatal error (session=%s job=%s city=%s "
+                        "category=%s page=%s): %s",
+                        self._session_id,
+                        job.id,
+                        job.city,
+                        job.category_slug,
+                        job.page,
+                        exc,
+                        exc_info=True,
+                    )
+
+                    job.status = CrawlStatus.FAILED
+
+                    await self._persist_job(job)
+
+                    async with lock:
+                        result.jobs_failed += 1
+
+                    await self._publisher.publish(
+                        JobFailedEvent(
+                            job=job,
+                            error=str(exc),
+                            retryable=False,
+                        )
+                    )
+
+                    return
+
+                job.status = CrawlStatus.COMPLETED
+
+                await self._persist_job(job)
+
+                async with lock:
+                    result.jobs_processed += 1
+                    result.pages_crawled += (
+                        crawl_result.pages_crawled
+                    )
+                    result.companies_discovered += (
+                        crawl_result.companies_discovered
+                    )
+
+                await self._publish_crawl_events(
+                    job=job,
+                    crawl_result=crawl_result,
+                )
+
+                return
 
         async def run_worker() -> None:
             worker: CrawlWorker = self._worker_factory()
@@ -78,34 +245,7 @@ class ConcurrentWorkerPool:
                 if job is None:
                     break
 
-                try:
-                    crawl_result: ListingCrawlResult = (
-                        await worker.execute(job)
-                    )
-
-                    async with lock:
-                        result.jobs_processed += 1
-                        result.pages_crawled += (
-                            crawl_result.pages_crawled
-                        )
-                        result.companies_discovered += (
-                            crawl_result.companies_discovered
-                        )
-
-                    await self._publish_crawl_events(
-                        job=job,
-                        crawl_result=crawl_result,
-                    )
-
-                except Exception:
-                    async with lock:
-                        result.jobs_failed += 1
-
-                    traceback.print_exc()
-
-                    # A failed job must not kill the worker.
-                    # Continue consuming the remaining queue.
-                    continue
+                await run_job(worker, job)
 
         await asyncio.gather(
             *[

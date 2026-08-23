@@ -37,3 +37,10 @@ class OutboxRepository(ABC):
         error: str,
     ) -> None:
         ...
+
+    @abstractmethod
+    async def mark_dead_lettered(
+        self,
+        message_id: UUID,
+    ) -> None:
+        ...
