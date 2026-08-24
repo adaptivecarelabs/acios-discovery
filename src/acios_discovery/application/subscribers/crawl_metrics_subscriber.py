@@ -6,6 +6,9 @@ from acios_discovery.application.metrics.crawl_metrics_service import (
 from acios_discovery.domain.events.company_discovered_event import (
     CompanyDiscoveredEvent,
 )
+from acios_discovery.domain.events.company_merged_event import (
+    CompanyMergedEvent,
+)
 from acios_discovery.domain.events.job_completed_event import (
     JobCompletedEvent,
 )
@@ -51,6 +54,12 @@ class CrawlMetricsSubscriber:
             CompanyDiscoveredEvent,
         ):
             self._metrics.record_company()
+
+        elif isinstance(
+            event,
+            CompanyMergedEvent,
+        ):
+            self._metrics.record_duplicate()
 
         elif isinstance(
             event,

@@ -111,3 +111,34 @@ def test_next_page_url_resolves_relative_url(
         "https://www.finelib.com/"
         "cities/lagos/agriculture/page-2"
     )
+
+
+def test_is_fallback_page_detects_generic_nigeria_h1():
+
+    parser = FinelibParser()
+
+    html = "<html><body><h1>Nigeria Health Sectors</h1></body></html>"
+
+    assert parser.is_fallback_page(html) is True
+
+
+def test_is_fallback_page_returns_false_for_real_city_h1():
+
+    parser = FinelibParser()
+
+    html = (
+        "<html><body>"
+        "<h1>Lagos Healthcare Service Centres</h1>"
+        "</body></html>"
+    )
+
+    assert parser.is_fallback_page(html) is False
+
+
+def test_is_fallback_page_returns_false_when_no_h1():
+
+    parser = FinelibParser()
+
+    html = "<html><body><p>No heading here</p></body></html>"
+
+    assert parser.is_fallback_page(html) is False

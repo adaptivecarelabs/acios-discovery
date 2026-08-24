@@ -282,3 +282,167 @@ async def test_pipeline_returns_correct_statistics(
     assert result.records_found == 3
     assert result.records_saved == 3
     assert result.duplicates == 0
+
+
+@pytest.mark.asyncio
+async def test_pipeline_continues_when_one_record_fails_enrichment(
+    persistence: FakePersistence,
+) -> None:
+    """
+    Regression test: a per-record enrichment failure (e.g. a
+    proxy exhausting all retries on one detail page) must not
+    abort the whole job. The failing record should still be
+    persisted and registered using listing-page data only, and
+    every other record in the same job should be processed
+    normally.
+    """
+
+    from acios_discovery.domain.errors.crawl_errors import (
+        RetryableCrawlError,
+    )
+
+    records = [
+        make_record("Company One"),
+        make_record("Company Two"),
+        make_record("Company Three"),
+    ]
+
+    crawler = Mock()
+    crawler.execute = AsyncMock(
+        return_value=ListingCrawlResult(
+            pages_crawled=1,
+            companies_discovered=3,
+            records=records,
+        ),
+    )
+
+    enricher = Mock()
+    enricher.enrich = AsyncMock(
+        side_effect=[
+            records[0],
+            RetryableCrawlError("simulated proxy exhaustion"),
+            records[2],
+        ],
+    )
+
+    processor = Mock()
+    processor.process = AsyncMock(
+        return_value=[],
+    )
+
+    pipeline = DiscoveryPipeline(
+        crawler=crawler,
+        enricher=enricher,
+        persistence=persistence,
+        processor=processor,
+    )
+
+    result = await pipeline.execute(
+        make_job(),
+    )
+
+    # All 3 records still get persisted — the failed one falls
+    # back to its un-enriched, listing-page-only form rather
+    # than being dropped.
+    assert result.records_saved == 3
+    assert len(persistence.records) == 3
+
+    # The failure is recorded, not silently swallowed.
+    assert len(result.errors) == 1
+    assert "Company Two" in result.errors[0]
+    assert result.successful is False
+
+    # The failing record, as persisted, is the original
+    # un-enriched record (records[1]) — not lost, not replaced
+    # with a placeholder.
+    assert persistence.records[1] is records[1]
+
+    # The processor still receives all 3 records, including the
+    # un-enriched one — it gets registered with whatever data is
+    # available.
+    processor.process.assert_awaited_once()
+    processed_records = processor.process.await_args.args[0]
+    assert len(processed_records) == 3
+
+
+@pytest.mark.asyncio
+async def test_pipeline_reports_success_when_no_enrichment_failures(
+    persistence: FakePersistence,
+) -> None:
+
+    records = [make_record("Company One")]
+
+    crawler = Mock()
+    crawler.execute = AsyncMock(
+        return_value=ListingCrawlResult(
+            pages_crawled=1,
+            companies_discovered=1,
+            records=records,
+        ),
+    )
+
+    enricher = Mock()
+    enricher.enrich = AsyncMock(
+        side_effect=lambda record: record,
+    )
+
+    processor = Mock()
+    processor.process = AsyncMock(return_value=[])
+
+    pipeline = DiscoveryPipeline(
+        crawler=crawler,
+        enricher=enricher,
+        persistence=persistence,
+        processor=processor,
+    )
+
+    result = await pipeline.execute(
+        make_job(),
+    )
+
+    assert result.errors == []
+    assert result.successful is True
+
+
+@pytest.mark.asyncio
+async def test_pipeline_does_not_catch_non_crawl_errors(
+    persistence: FakePersistence,
+) -> None:
+    """
+    Only CrawlError subclasses (RetryableCrawlError,
+    FatalCrawlError) represent expected, recoverable enrichment
+    failures. A genuine bug (e.g. a TypeError from a parsing
+    error) must still propagate — silently swallowing arbitrary
+    exceptions would hide real defects.
+    """
+
+    records = [make_record("Company One")]
+
+    crawler = Mock()
+    crawler.execute = AsyncMock(
+        return_value=ListingCrawlResult(
+            pages_crawled=1,
+            companies_discovered=1,
+            records=records,
+        ),
+    )
+
+    enricher = Mock()
+    enricher.enrich = AsyncMock(
+        side_effect=TypeError("simulated bug"),
+    )
+
+    processor = Mock()
+    processor.process = AsyncMock(return_value=[])
+
+    pipeline = DiscoveryPipeline(
+        crawler=crawler,
+        enricher=enricher,
+        persistence=persistence,
+        processor=processor,
+    )
+
+    with pytest.raises(TypeError):
+        await pipeline.execute(
+            make_job(),
+        )

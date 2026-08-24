@@ -94,6 +94,21 @@ class FinelibConnector(BaseConnector):
 
         return discoveries
 
+    def is_fallback_page(
+        self,
+        html: str,
+    ) -> bool:
+        """
+        True if this page is Finelib's generic nationwide
+        fallback listing rather than a real, city-specific
+        listing. See FinelibParser.is_fallback_page for the
+        detection rationale.
+        """
+
+        return self._parser.is_fallback_page(
+            html,
+        )
+
     def next_page_url(
         self,
         html: str,

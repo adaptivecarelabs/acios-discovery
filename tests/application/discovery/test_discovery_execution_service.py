@@ -58,6 +58,7 @@ class FakeSupervisor:
                 "jobs_processed": 3,
                 "pages_crawled": 7,
                 "companies_discovered": 42,
+                "enrichment_failures": 0,
             },
         )()
 

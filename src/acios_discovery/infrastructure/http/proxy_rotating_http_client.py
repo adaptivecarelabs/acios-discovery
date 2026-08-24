@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from acios_discovery.application.metrics.crawl_metrics_service import (
+    CrawlMetricsService,
+)
 from acios_discovery.application.proxy import AdaptiveProxyPool
 from acios_discovery.domain.errors.crawl_errors import (
     FatalCrawlError,
@@ -28,10 +31,12 @@ class ProxyRotatingHttpClient(HttpClient):
         inner: HttpxClient,
         pool: AdaptiveProxyPool,
         max_attempts: int = 3,
+        metrics: CrawlMetricsService | None = None,
     ) -> None:
         self._inner = inner
         self._pool = pool
         self._max_attempts = max_attempts
+        self._metrics = metrics
 
     async def get(
         self,
@@ -56,6 +61,9 @@ class ProxyRotatingHttpClient(HttpClient):
                     state,
                     retryable=True,
                 )
+
+                if self._metrics is not None:
+                    self._metrics.record_proxy_retry()
 
                 last_exc = exc
 

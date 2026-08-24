@@ -19,6 +19,8 @@ from acios_discovery.application.discovery.result import (
     DiscoveryRunResult,
 )
 from acios_discovery.domain.crawling import CrawlJob
+from acios_discovery.domain.errors.crawl_errors import CrawlError
+from acios_discovery.shared.logging import logger
 
 
 class DiscoveryPipeline:
@@ -63,10 +65,33 @@ class DiscoveryPipeline:
 
         enriched_records = []
 
+        errors: list[str] = []
+
         for record in crawl_result.records:
-            enriched = await self._enricher.enrich(
-                record,
-            )
+
+            try:
+                enriched = await self._enricher.enrich(
+                    record,
+                )
+
+            except CrawlError as exc:
+
+                logger.warning(
+                    "Detail-page enrichment failed for %s "
+                    "(%s) — registering with listing-page "
+                    "data only: %s",
+                    record.company.business_name,
+                    record.company.detail_url,
+                    exc,
+                )
+
+                errors.append(
+                    f"Enrichment failed for "
+                    f"{record.company.business_name} "
+                    f"({record.company.detail_url}): {exc}"
+                )
+
+                enriched = record
 
             await self._persistence.persist(
                 enriched,
@@ -91,4 +116,5 @@ class DiscoveryPipeline:
             ),
             source=job.source.value,
             records=enriched_records,
+            errors=errors,
         )

@@ -28,6 +28,12 @@ class CrawlMetricsService:
     def record_company(self, count: int = 1) -> None:
         self._metrics.companies_discovered += count
 
+    def record_duplicate(self, count: int = 1) -> None:
+        self._metrics.duplicates_found += count
+
+    def record_proxy_retry(self, count: int = 1) -> None:
+        self._metrics.proxy_retries += count
+
     def record_request(self) -> None:
         self._metrics.requests_sent += 1
 
@@ -64,6 +70,8 @@ class CrawlMetricsService:
             jobs_processed=self._metrics.jobs_processed,
             pages_crawled=self._metrics.pages_crawled,
             companies_discovered=self._metrics.companies_discovered,
+            duplicates_found=self._metrics.duplicates_found,
+            proxy_retries=self._metrics.proxy_retries,
             requests_sent=self._metrics.requests_sent,
             retries=self._metrics.retries,
             failures=self._metrics.failures,
@@ -94,6 +102,8 @@ class CrawlMetricsService:
             jobs_processed=snapshot.jobs_processed,
             pages_crawled=snapshot.pages_crawled,
             companies_discovered=snapshot.companies_discovered,
+            duplicates_found=snapshot.duplicates_found,
+            proxy_retries=snapshot.proxy_retries,
             requests_sent=snapshot.requests_sent,
             retries=snapshot.retries,
             failures=snapshot.failures,

@@ -228,6 +228,9 @@ class ConcurrentWorkerPool:
                     result.companies_discovered += (
                         crawl_result.companies_discovered
                     )
+                    result.enrichment_failures += (
+                        len(crawl_result.errors)
+                    )
 
                 await self._publish_crawl_events(
                     job=job,

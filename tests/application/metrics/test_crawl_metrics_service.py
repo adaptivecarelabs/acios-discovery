@@ -31,3 +31,29 @@ def test_metrics_snapshot():
     assert snapshot.pages_per_second > 0
 
     assert snapshot.companies_per_second > 0
+
+
+def test_metrics_snapshot_tracks_duplicates_separately_from_companies():
+
+    service = CrawlMetricsService()
+
+    service.record_company(3)
+    service.record_duplicate(2)
+
+    snapshot = service.snapshot()
+
+    assert snapshot.companies_discovered == 3
+    assert snapshot.duplicates_found == 2
+
+
+def test_metrics_snapshot_tracks_proxy_retries():
+
+    service = CrawlMetricsService()
+
+    service.record_proxy_retry()
+    service.record_proxy_retry()
+    service.record_proxy_retry(count=3)
+
+    snapshot = service.snapshot()
+
+    assert snapshot.proxy_retries == 5

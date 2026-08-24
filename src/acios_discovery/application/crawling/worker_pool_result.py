@@ -16,4 +16,5 @@ class WorkerPoolResult:
     pages_crawled: int = 0
     companies_discovered: int = 0
     jobs_failed: int = 0
+    enrichment_failures: int = 0
     completed: bool = False

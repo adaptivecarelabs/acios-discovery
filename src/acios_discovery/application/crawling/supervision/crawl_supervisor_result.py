@@ -21,3 +21,5 @@ class CrawlSupervisorResult:
     pages_crawled: int
 
     companies_discovered: int
+
+    enrichment_failures: int

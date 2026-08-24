@@ -40,8 +40,13 @@ class ListingUrlBuilder:
             plan.category_slug,
         )
 
+        taxonomy = self._taxonomy.taxonomy(
+            plan.category_slug,
+        )
+
         path = self._slug_mapper.listing_path(
             plan.category_slug,
+            root=taxonomy.root,
         )
 
         city = plan.city.strip().lower().replace(

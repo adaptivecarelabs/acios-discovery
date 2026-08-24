@@ -38,6 +38,39 @@ class FinelibParser(BaseDirectoryParser):
     ) -> list[RawDiscovery]:
         raise NotImplementedError
 
+    def is_fallback_page(
+        self,
+        html: str,
+    ) -> bool:
+        """
+        Detect Finelib's generic nationwide fallback listing.
+
+        Finelib returns HTTP 200 with a generic "Nigeria {X}"
+        page for any (city, category) URL that does not have a
+        dedicated listing, rather than a 404. This page is
+        indistinguishable from a real listing by status code —
+        it must be detected by content. Confirmed empirically:
+        a real listing page's <h1> starts with the requested
+        city's name (e.g. "Lagos Healthcare Service Centres",
+        "Lagos Restaurants and Eateries"); the fallback page's
+        <h1> always starts with the literal word "Nigeria"
+        (e.g. "Nigeria Health Sectors", "Nigeria Restaurants").
+        """
+
+        soup = BeautifulSoup(
+            html,
+            "html.parser",
+        )
+
+        h1 = soup.find("h1")
+
+        if h1 is None:
+            return False
+
+        text = h1.get_text(strip=True)
+
+        return text.startswith("Nigeria ")
+
     def next_page_url(
         self,
         html: str,

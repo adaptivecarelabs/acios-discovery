@@ -26,3 +26,17 @@ class FatalCrawlError(CrawlError):
     A failure where retrying the same job would not help
     (4xx other than 429, malformed request, etc).
     """
+
+
+class ListingNotFoundError(FatalCrawlError):
+    """
+    A listing page returned 404 for this (city, category)
+    combination.
+
+    Distinct from other FatalCrawlErrors: this is an expected,
+    routine outcome (most city/category combinations do not
+    exist on the source site, and our slug mapping does not
+    perfectly predict every city's real URL structure) rather
+    than a genuine problem. Callers should treat this as "zero
+    results for this job", not as a job failure.
+    """

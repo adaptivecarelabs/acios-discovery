@@ -19,6 +19,10 @@ class RuntimeMetricsSnapshot:
 
     companies_discovered: int
 
+    duplicates_found: int
+
+    proxy_retries: int
+
     requests_sent: int
 
     retries: int

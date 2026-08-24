@@ -13,6 +13,9 @@ from acios_discovery.application.events.event_serializer import (
     serialize_event,
 )
 from acios_discovery.application.events.outbox import OutboxMessage
+from acios_discovery.application.metrics.crawl_metrics_service import (
+    CrawlMetricsService,
+)
 from acios_discovery.application.persistence.unit_of_work import UnitOfWork
 from acios_discovery.application.resolution.entity_resolution_service import (
     EntityResolutionService,
@@ -39,12 +42,14 @@ class DiscoveryCompanyRegistryService:
         resolution_service: EntityResolutionService,
         factory: CompanyFactory,
         merge_service: CompanyMergeService,
+        metrics: CrawlMetricsService | None = None,
     ) -> None:
 
         self._unit_of_work = unit_of_work
         self._resolution_service = resolution_service
         self._factory = factory
         self._merge_service = merge_service
+        self._metrics = metrics
 
     async def register(
         self,
@@ -103,6 +108,9 @@ class DiscoveryCompanyRegistryService:
                     resolution.company.canonical_name,
                     summary.changed_fields,
                 )
+
+                if self._metrics is not None:
+                    self._metrics.record_duplicate()
 
                 await uow.company_repository.update(
                     resolution.company,

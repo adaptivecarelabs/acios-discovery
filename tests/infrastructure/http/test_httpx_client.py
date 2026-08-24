@@ -19,3 +19,87 @@ async def test_httpx_client_downloads_business_page() -> None:
 
     assert html
     assert "<html" in html.lower()
+
+
+@pytest.mark.asyncio
+async def test_httpx_client_raises_listing_not_found_on_404():
+    """
+    Regression test: a plain HTTP 404 must raise
+    ListingNotFoundError specifically (a subclass of
+    FatalCrawlError), not a generic FatalCrawlError — callers
+    rely on this distinction to treat "no listing exists" as
+    zero results rather than a job failure.
+    """
+
+    import httpx
+
+    from acios_discovery.domain.errors.crawl_errors import (
+        ListingNotFoundError,
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404, text="Not Found")
+
+    transport = httpx.MockTransport(handler)
+
+    client = HttpxClient()
+
+    original_async_client = httpx.AsyncClient
+
+    def patched_client(*args, **kwargs):
+        kwargs["transport"] = transport
+        return original_async_client(*args, **kwargs)
+
+    import acios_discovery.infrastructure.http.httpx_client as module
+
+    module.httpx.AsyncClient = patched_client
+
+    try:
+        with pytest.raises(ListingNotFoundError):
+            await client.get("https://example.com/nonexistent")
+    finally:
+        module.httpx.AsyncClient = original_async_client
+
+
+@pytest.mark.asyncio
+async def test_httpx_client_raises_fatal_error_on_non_404_client_error():
+    """
+    A non-404 4xx (e.g. 403) must still raise the generic
+    FatalCrawlError, not ListingNotFoundError — only 404
+    specifically means "no listing exists here".
+    """
+
+    import httpx
+
+    from acios_discovery.domain.errors.crawl_errors import (
+        FatalCrawlError,
+        ListingNotFoundError,
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(403, text="Forbidden")
+
+    transport = httpx.MockTransport(handler)
+
+    client = HttpxClient()
+
+    original_async_client = httpx.AsyncClient
+
+    def patched_client(*args, **kwargs):
+        kwargs["transport"] = transport
+        return original_async_client(*args, **kwargs)
+
+    import acios_discovery.infrastructure.http.httpx_client as module
+
+    module.httpx.AsyncClient = patched_client
+
+    try:
+        with pytest.raises(FatalCrawlError) as exc_info:
+            await client.get("https://example.com/blocked")
+
+        assert not isinstance(
+            exc_info.value,
+            ListingNotFoundError,
+        )
+    finally:
+        module.httpx.AsyncClient = original_async_client

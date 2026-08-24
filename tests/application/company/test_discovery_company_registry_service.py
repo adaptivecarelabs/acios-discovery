@@ -12,6 +12,9 @@ from acios_discovery.application.company.discovery_company_registry_service impo
 from acios_discovery.application.company.sequential_company_id_allocator import (
     SequentialCompanyIdAllocator,
 )
+from acios_discovery.application.metrics.crawl_metrics_service import (
+    CrawlMetricsService,
+)
 from acios_discovery.application.persistence.unit_of_work import (
     UnitOfWork,
 )
@@ -211,3 +214,165 @@ async def test_register_merges_duplicate():
     assert message.event_type == "CompanyMergedEvent"
     assert message.aggregate_type == "company"
     assert message.aggregate_id == str(existing.id)
+
+
+@pytest.mark.asyncio
+async def test_register_records_duplicate_metric_on_merge():
+    """
+    Regression test: a merge must increment the metrics
+    service's duplicate counter synchronously, at the point the
+    merge decision is made — not via the outbox/event relay,
+    which is a separate, asynchronous, out-of-process delivery
+    path that a live crawl run's own metrics snapshot cannot
+    observe.
+    """
+
+    company_repository = InMemoryCompanyRepository()
+    discovery_repository = InMemoryDiscoveryRepository()
+
+    factory = CompanyFactory(id_allocator=SequentialCompanyIdAllocator())
+
+    existing = await factory.create(
+        discovery=RawDiscovery(
+            source=Source.FINELIB,
+            business_name="Drugstoc",
+            phone_numbers=["08030000000"],
+        ),
+    )
+
+    await company_repository.add(existing)
+
+    record = make_record(
+        "Drugstoc Ltd",
+        detail_url="https://www.finelib.com/listing/drugstoc-ltd/metrics/",
+        phone="08030000000",
+    )
+
+    await discovery_repository.save(record)
+
+    uow = FakeUnitOfWork(
+        company_repository=company_repository,
+        discovery_repository=discovery_repository,
+    )
+
+    resolution = EntityResolutionService(
+        repository=InMemoryCompanyMatchRepository(company_repository),
+        engine=EntityResolutionEngine(),
+    )
+
+    metrics = CrawlMetricsService()
+
+    service = DiscoveryCompanyRegistryService(
+        unit_of_work=uow,
+        resolution_service=resolution,
+        factory=CompanyFactory(id_allocator=SequentialCompanyIdAllocator()),
+        merge_service=CompanyMergeService(),
+        metrics=metrics,
+    )
+
+    await service.register(
+        record=record,
+    )
+
+    assert metrics.snapshot().duplicates_found == 1
+
+
+@pytest.mark.asyncio
+async def test_register_does_not_record_duplicate_metric_on_create():
+    """
+    A brand-new company (no existing match) must NOT increment
+    the duplicate counter.
+    """
+
+    company_repository = InMemoryCompanyRepository()
+    discovery_repository = InMemoryDiscoveryRepository()
+
+    record = make_record(
+        "A Genuinely New Company",
+        detail_url="https://www.finelib.com/listing/new-co/metrics/",
+    )
+
+    await discovery_repository.save(record)
+
+    uow = FakeUnitOfWork(
+        company_repository=company_repository,
+        discovery_repository=discovery_repository,
+    )
+
+    resolution = EntityResolutionService(
+        repository=InMemoryCompanyMatchRepository(company_repository),
+        engine=EntityResolutionEngine(),
+    )
+
+    metrics = CrawlMetricsService()
+
+    service = DiscoveryCompanyRegistryService(
+        unit_of_work=uow,
+        resolution_service=resolution,
+        factory=CompanyFactory(id_allocator=SequentialCompanyIdAllocator()),
+        merge_service=CompanyMergeService(),
+        metrics=metrics,
+    )
+
+    await service.register(
+        record=record,
+    )
+
+    assert metrics.snapshot().duplicates_found == 0
+
+
+@pytest.mark.asyncio
+async def test_register_works_without_metrics_service():
+    """
+    metrics is optional — register() must not raise when no
+    metrics service is provided (matches every call site prior
+    to this feature, and any future caller that doesn't care
+    about metrics).
+    """
+
+    company_repository = InMemoryCompanyRepository()
+    discovery_repository = InMemoryDiscoveryRepository()
+
+    factory = CompanyFactory(id_allocator=SequentialCompanyIdAllocator())
+
+    existing = await factory.create(
+        discovery=RawDiscovery(
+            source=Source.FINELIB,
+            business_name="Drugstoc",
+            phone_numbers=["08030000000"],
+        ),
+    )
+
+    await company_repository.add(existing)
+
+    record = make_record(
+        "Drugstoc Ltd",
+        detail_url="https://www.finelib.com/listing/drugstoc-ltd/no-metrics/",
+        phone="08030000000",
+    )
+
+    await discovery_repository.save(record)
+
+    uow = FakeUnitOfWork(
+        company_repository=company_repository,
+        discovery_repository=discovery_repository,
+    )
+
+    resolution = EntityResolutionService(
+        repository=InMemoryCompanyMatchRepository(company_repository),
+        engine=EntityResolutionEngine(),
+    )
+
+    service = DiscoveryCompanyRegistryService(
+        unit_of_work=uow,
+        resolution_service=resolution,
+        factory=CompanyFactory(id_allocator=SequentialCompanyIdAllocator()),
+        merge_service=CompanyMergeService(),
+        # metrics intentionally omitted
+    )
+
+    company = await service.register(
+        record=record,
+    )
+
+    assert company.id == existing.id

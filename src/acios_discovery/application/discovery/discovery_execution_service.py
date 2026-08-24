@@ -145,4 +145,7 @@ class DiscoveryExecutionService:
                 supervisor_result.companies_discovered
             ),
             workers=supervisor_result.workers,
+            enrichment_failures=(
+                supervisor_result.enrichment_failures
+            ),
         )

@@ -69,4 +69,5 @@ class CrawlWorker:
                 pages_crawled=result.pages_crawled,
                 companies_discovered=result.records_found,
                 records=result.records,
+                errors=result.errors,
             )

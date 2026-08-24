@@ -11,6 +11,7 @@ from acios_discovery.application.planning.builders.listing_url_builder import (
 )
 from acios_discovery.application.planning.models import CrawlPlan
 from acios_discovery.domain.crawling import CrawlJob
+from acios_discovery.domain.errors.crawl_errors import ListingNotFoundError
 from acios_discovery.infrastructure.connectors.finelib.connector import (
     FinelibConnector,
 )
@@ -86,9 +87,28 @@ class ListingCrawlEngine:
                 current_url,
             )
 
-            html = await self._downloader.download(
-                current_url,
-            )
+            try:
+                html = await self._downloader.download(
+                    current_url,
+                )
+
+            except ListingNotFoundError:
+                logger.info(
+                    "No listing exists for %s (404) — "
+                    "treating as zero results, not a failure.",
+                    current_url,
+                )
+                break
+
+            if self._connector.is_fallback_page(html):
+                logger.info(
+                    "No dedicated listing for %s (Finelib "
+                    "served its generic nationwide fallback "
+                    "page) — treating as zero results, not "
+                    "a failure.",
+                    current_url,
+                )
+                break
 
             records = await self._connector.crawl_listing(
                 html=html,

@@ -7,8 +7,13 @@ from acios_discovery.application.subscribers.crawl_metrics_subscriber import (
     CrawlMetricsSubscriber,
 )
 from acios_discovery.domain.crawling import CrawlJob
+from acios_discovery.domain.company.company_id import CompanyId
+from acios_discovery.domain.company.merge_summary import MergeSummary
 from acios_discovery.domain.events.company_discovered_event import (
     CompanyDiscoveredEvent,
+)
+from acios_discovery.domain.events.company_merged_event import (
+    CompanyMergedEvent,
 )
 from acios_discovery.domain.events.job_completed_event import (
     JobCompletedEvent,
@@ -127,3 +132,66 @@ async def test_subscriber_records_job_failed():
     )
 
     assert metrics.snapshot().failures == 1
+
+
+@pytest.mark.asyncio
+async def test_subscriber_records_company_merged_as_duplicate():
+    """
+    Regression test: a CompanyMergedEvent means this discovery
+    matched an existing company (a duplicate), and must be
+    counted separately from CompanyDiscoveredEvent (a brand new
+    company).
+    """
+
+    metrics = CrawlMetricsService()
+    subscriber = CrawlMetricsSubscriber(metrics=metrics)
+
+    await subscriber(
+        CompanyMergedEvent(
+            company_id=CompanyId.from_sequence(1),
+            source="finelib",
+            detail_url="https://example.com/company",
+            summary=MergeSummary(),
+        )
+    )
+
+    snapshot = metrics.snapshot()
+
+    assert snapshot.duplicates_found == 1
+    assert snapshot.companies_discovered == 0
+
+
+@pytest.mark.asyncio
+async def test_company_discovered_and_company_merged_are_counted_separately():
+
+    metrics = CrawlMetricsService()
+    subscriber = CrawlMetricsSubscriber(metrics=metrics)
+
+    await subscriber(
+        CompanyDiscoveredEvent(
+            record=make_record(),
+        )
+    )
+
+    await subscriber(
+        CompanyMergedEvent(
+            company_id=CompanyId.from_sequence(1),
+            source="finelib",
+            detail_url="https://example.com/company",
+            summary=MergeSummary(),
+        )
+    )
+
+    await subscriber(
+        CompanyMergedEvent(
+            company_id=CompanyId.from_sequence(2),
+            source="finelib",
+            detail_url="https://example.com/company-2",
+            summary=MergeSummary(),
+        )
+    )
+
+    snapshot = metrics.snapshot()
+
+    assert snapshot.companies_discovered == 1
+    assert snapshot.duplicates_found == 2

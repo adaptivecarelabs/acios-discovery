@@ -23,6 +23,10 @@ class CrawlMetrics:
 
     companies_discovered: int = 0
 
+    duplicates_found: int = 0
+
+    proxy_retries: int = 0
+
     requests_sent: int = 0
 
     retries: int = 0

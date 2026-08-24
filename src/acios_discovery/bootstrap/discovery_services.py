@@ -128,6 +128,7 @@ class DiscoveryServices:
         planner: CrawlPlanGenerator | None = None,
         session_factory: Callable[[], AsyncSession] | None = None,
         resume_session_id: str | None = None,
+        metrics: CrawlMetricsService | None = None,
     ) -> None:
         
 
@@ -139,7 +140,7 @@ class DiscoveryServices:
         # metrics-wrapped instance by the time they're built.
         #
 
-        self.metrics = CrawlMetricsService()
+        self.metrics = metrics or CrawlMetricsService()
 
         self.http = MetricsRecordingHttpClient(
             client=http or HttpxClient(),
@@ -295,6 +296,7 @@ class DiscoveryServices:
                 resolution_service=self.resolution_service,
                 factory=self.factory,
                 merge_service=self.merge_service,
+                metrics=self.metrics,
             )
         )
 
@@ -439,6 +441,7 @@ class DiscoveryServices:
             resolution_service=resolution_service,
             factory=factory,
             merge_service=merge_service,
+            metrics=self.metrics,
         )
 
         #

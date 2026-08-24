@@ -23,12 +23,12 @@ def test_generates_targeted_plan() -> None:
 
     plan = generator.generate(
         state="Lagos",
-        city="Yaba",
+        city="Ikeja",
         category_slug="restaurants",
     )
 
     assert plan.state == "Lagos"
-    assert plan.city == "Yaba"
+    assert plan.city == "Ikeja"
     assert plan.category_slug == "restaurants"
     assert plan.page == 1
 
@@ -50,6 +50,6 @@ def test_rejects_unknown_category() -> None:
     with pytest.raises(ValueError):
         generator.generate(
             state="Lagos",
-            city="Yaba",
+            city="Ikeja",
             category_slug="definitely-not-a-category",
         )

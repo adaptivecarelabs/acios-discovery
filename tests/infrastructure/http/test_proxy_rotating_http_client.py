@@ -128,3 +128,91 @@ async def test_failed_proxy_backs_off_after_retryable_error():
 
     assert len(failed_states) == 1
     assert failed_states[0].current_delay > 0.001  # grew from min_delay
+
+
+@pytest.mark.asyncio
+async def test_retryable_failure_records_proxy_retry_metric():
+    """
+    Regression test: a proxy timeout that gets silently absorbed
+    and retried via a different proxy must still be visible in
+    metrics — otherwise real retry activity (and the time it
+    costs) is invisible in the final crawl summary.
+    """
+
+    from acios_discovery.application.metrics.crawl_metrics_service import (
+        CrawlMetricsService,
+    )
+
+    pool = make_pool(3)
+
+    call_count = 0
+
+    async def fake_get(url, *, proxy=None):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            raise RetryableCrawlError("simulated timeout")
+        return "ok"
+
+    inner = AsyncMock()
+    inner.get.side_effect = fake_get
+
+    metrics = CrawlMetricsService()
+
+    client = ProxyRotatingHttpClient(
+        inner=inner,
+        pool=pool,
+        metrics=metrics,
+    )
+
+    await client.get("https://example.com")
+
+    assert metrics.snapshot().proxy_retries == 1
+
+
+@pytest.mark.asyncio
+async def test_successful_first_attempt_does_not_record_proxy_retry():
+
+    from acios_discovery.application.metrics.crawl_metrics_service import (
+        CrawlMetricsService,
+    )
+
+    pool = make_pool(3)
+
+    inner = AsyncMock()
+    inner.get.return_value = "ok"
+
+    metrics = CrawlMetricsService()
+
+    client = ProxyRotatingHttpClient(
+        inner=inner,
+        pool=pool,
+        metrics=metrics,
+    )
+
+    await client.get("https://example.com")
+
+    assert metrics.snapshot().proxy_retries == 0
+
+
+@pytest.mark.asyncio
+async def test_works_without_metrics_service():
+    """
+    metrics is optional — the client must not raise when no
+    metrics service is provided.
+    """
+
+    pool = make_pool(2)
+
+    inner = AsyncMock()
+    inner.get.return_value = "ok"
+
+    client = ProxyRotatingHttpClient(
+        inner=inner,
+        pool=pool,
+        # metrics intentionally omitted
+    )
+
+    result = await client.get("https://example.com")
+
+    assert result == "ok"

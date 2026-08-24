@@ -2,6 +2,7 @@ import httpx
 
 from acios_discovery.domain.errors.crawl_errors import (
     FatalCrawlError,
+    ListingNotFoundError,
     RetryableCrawlError,
 )
 from acios_discovery.domain.http import HttpClient
@@ -62,6 +63,11 @@ class HttpxClient(HttpClient):
             if status_code in _RETRYABLE_STATUS_CODES:
                 raise RetryableCrawlError(
                     f"HTTP {status_code} fetching {url}: {exc}",
+                ) from exc
+
+            if status_code == 404:
+                raise ListingNotFoundError(
+                    f"HTTP 404 fetching {url}: {exc}",
                 ) from exc
 
             raise FatalCrawlError(

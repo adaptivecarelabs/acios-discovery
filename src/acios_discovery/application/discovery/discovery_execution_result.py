@@ -24,3 +24,5 @@ class DiscoveryExecutionResult:
     companies_discovered: int
 
     workers: int
+
+    enrichment_failures: int = 0

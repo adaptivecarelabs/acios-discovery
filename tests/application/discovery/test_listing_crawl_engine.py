@@ -77,6 +77,8 @@ async def test_engine_returns_result() -> None:
         spec=FinelibConnector,
     )
 
+    connector.is_fallback_page.return_value = False
+
     connector.crawl_listing = AsyncMock(
         return_value=[],
     )
@@ -144,6 +146,8 @@ async def test_engine_returns_discovered_records() -> None:
         spec=FinelibConnector,
     )
 
+    connector.is_fallback_page.return_value = False
+
     connector.crawl_listing = AsyncMock(
         return_value=records,
     )
@@ -188,6 +192,8 @@ async def test_engine_follows_connector_next_url() -> None:
     connector = Mock(
         spec=FinelibConnector,
     )
+
+    connector.is_fallback_page.return_value = False
 
     connector.crawl_listing = AsyncMock(
         side_effect=[
@@ -274,6 +280,8 @@ async def test_engine_passes_current_url_to_next_page_parser() -> None:
         spec=FinelibConnector,
     )
 
+    connector.is_fallback_page.return_value = False
+
     connector.crawl_listing = AsyncMock(
         return_value=[],
     )
@@ -322,6 +330,8 @@ async def test_engine_stops_on_pagination_loop() -> None:
         spec=FinelibConnector,
     )
 
+    connector.is_fallback_page.return_value = False
+
     connector.crawl_listing = AsyncMock(
         return_value=[],
     )
@@ -366,6 +376,8 @@ async def test_engine_starts_from_job_page() -> None:
         spec=FinelibConnector,
     )
 
+    connector.is_fallback_page.return_value = False
+
     connector.crawl_listing = AsyncMock(
         return_value=[],
     )
@@ -396,3 +408,146 @@ async def test_engine_starts_from_job_page() -> None:
     assert requested_url.endswith(
         "/page-7"
     )
+
+
+@pytest.mark.asyncio
+async def test_engine_returns_zero_results_on_404_without_raising() -> None:
+    """
+    Regression test: a 404 on a listing page (e.g. our slug
+    mapping guessed the wrong category path for this city) must
+    resolve as zero results, not propagate as a job failure.
+    """
+
+    from acios_discovery.domain.errors.crawl_errors import (
+        ListingNotFoundError,
+    )
+
+    downloader = AsyncMock()
+
+    downloader.download.side_effect = ListingNotFoundError(
+        "simulated 404",
+    )
+
+    connector = Mock(
+        spec=FinelibConnector,
+    )
+
+    connector.is_fallback_page.return_value = False
+
+    engine = ListingCrawlEngine(
+        downloader=downloader,
+        connector=connector,
+        url_builder=make_builder(),
+    )
+
+    result = await engine.execute(
+        CrawlJob(
+            source=Source.FINELIB,
+            listing_url="https://example.com",
+            state="Lagos",
+            city="Lagos",
+            category_slug="restaurants",
+        )
+    )
+
+    assert result.pages_crawled == 0
+    assert result.companies_discovered == 0
+    assert result.records == []
+
+    # crawl_listing must never be called — there was no real
+    # page content to parse.
+    connector.crawl_listing.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_engine_skips_fallback_page_without_extracting_records() -> None:
+    """
+    Regression test for the Yaba/Lekki/Ikeja incident: Finelib
+    serves a generic nationwide fallback page (HTTP 200) for
+    (city, category) combinations with no dedicated listing.
+    The engine must detect this and treat it as zero results,
+    never parsing the fallback page's (unrelated, shared-across-
+    every-invalid-city) business cards as if they were real
+    results for this city.
+    """
+
+    downloader = AsyncMock()
+
+    downloader.download.return_value = (
+        "<html><h1>Nigeria Health Sectors</h1></html>"
+    )
+
+    connector = Mock(
+        spec=FinelibConnector,
+    )
+
+    connector.is_fallback_page.return_value = True
+
+    engine = ListingCrawlEngine(
+        downloader=downloader,
+        connector=connector,
+        url_builder=make_builder(),
+    )
+
+    result = await engine.execute(
+        CrawlJob(
+            source=Source.FINELIB,
+            listing_url="https://example.com",
+            state="Lagos",
+            city="Lagos",
+            category_slug="healthcare",
+        )
+    )
+
+    assert result.pages_crawled == 0
+    assert result.companies_discovered == 0
+    assert result.records == []
+
+    connector.crawl_listing.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_engine_proceeds_normally_when_not_fallback_and_not_404() -> None:
+    """
+    Sanity check that the new checks don't interfere with the
+    normal, successful path — a real listing page still gets
+    parsed as before.
+    """
+
+    downloader = AsyncMock()
+
+    downloader.download.return_value = (
+        "<html><h1>Lagos Restaurants</h1></html>"
+    )
+
+    connector = Mock(
+        spec=FinelibConnector,
+    )
+
+    connector.is_fallback_page.return_value = False
+
+    connector.crawl_listing = AsyncMock(
+        return_value=[make_record(name="Real Company")],
+    )
+
+    connector.next_page_url.return_value = None
+
+    engine = ListingCrawlEngine(
+        downloader=downloader,
+        connector=connector,
+        url_builder=make_builder(),
+    )
+
+    result = await engine.execute(
+        CrawlJob(
+            source=Source.FINELIB,
+            listing_url="https://example.com",
+            state="Lagos",
+            city="Lagos",
+            category_slug="restaurants",
+        )
+    )
+
+    assert result.pages_crawled == 1
+    assert result.companies_discovered == 1
+    connector.crawl_listing.assert_called_once()

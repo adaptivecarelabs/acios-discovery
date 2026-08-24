@@ -11,9 +11,9 @@ def test_returns_lagos_cities():
         "Lagos",
     )
 
-    assert "Yaba" in cities
+    assert "Ikeja" in cities
 
-    assert "Lekki" in cities
+    assert "Badagry" in cities
 
 
 def test_unknown_state_returns_empty():

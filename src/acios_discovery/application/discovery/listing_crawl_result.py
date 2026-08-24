@@ -18,4 +18,7 @@ class ListingCrawlResult(BaseModel):
     records: list[DiscoveryRecord] = Field(
         default_factory=list,
     )
+    errors: list[str] = Field(
+        default_factory=list,
+    )
 

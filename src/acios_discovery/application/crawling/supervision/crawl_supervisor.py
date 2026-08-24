@@ -114,6 +114,9 @@ class CrawlSupervisor:
                 companies_discovered=(
                     worker_result.companies_discovered
                 ),
+                enrichment_failures=(
+                    worker_result.enrichment_failures
+                ),
             )
 
         except Exception as exc:
