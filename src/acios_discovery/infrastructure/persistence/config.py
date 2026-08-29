@@ -21,3 +21,17 @@ def _require_database_url() -> str:
 DATABASE_URL: str = _require_database_url()
 
 WEBSHARE_API_KEY: str | None = os.getenv("WEBSHARE_API_KEY")
+
+
+def _require_jwt_secret_key() -> str:
+    value = os.getenv("JWT_SECRET_KEY")
+
+    if not value:
+        raise RuntimeError(
+            "JWT_SECRET_KEY must be set before starting the API."
+        )
+
+    return value
+
+
+JWT_SECRET_KEY: str = _require_jwt_secret_key()

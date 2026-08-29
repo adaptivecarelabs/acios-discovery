@@ -47,6 +47,10 @@ class SqlAlchemyCrawlSessionRepository(CrawlSessionRepository):
         if orm is None:
             orm = CrawlSessionORM(
                 id=session.id,
+                state=session.state,
+                categories=session.categories,
+                max_jobs=session.max_jobs,
+                triggered_by_user_id=session.triggered_by_user_id,
                 status=str(session.status),
                 started_at=session.started_at,
                 finished_at=session.finished_at,
@@ -63,6 +67,10 @@ class SqlAlchemyCrawlSessionRepository(CrawlSessionRepository):
             self._session.add(orm)
             return
 
+        orm.state = session.state
+        orm.categories = session.categories
+        orm.max_jobs = session.max_jobs
+        orm.triggered_by_user_id = session.triggered_by_user_id
         orm.status = str(session.status)
         orm.started_at = session.started_at
         orm.finished_at = session.finished_at
@@ -94,6 +102,10 @@ class SqlAlchemyCrawlSessionRepository(CrawlSessionRepository):
 
         return CrawlSession(
             id=orm.id,
+            state=orm.state,
+            categories=orm.categories,
+            max_jobs=orm.max_jobs,
+            triggered_by_user_id=orm.triggered_by_user_id,
             status=CrawlSessionStatus(orm.status),
             started_at=orm.started_at,
             finished_at=orm.finished_at,
@@ -122,6 +134,10 @@ class SqlAlchemyCrawlSessionRepository(CrawlSessionRepository):
         return [
             CrawlSession(
                 id=row.id,
+                state=row.state,
+                categories=row.categories,
+                max_jobs=row.max_jobs,
+                triggered_by_user_id=row.triggered_by_user_id,
                 status=CrawlSessionStatus(row.status),
                 started_at=row.started_at,
                 finished_at=row.finished_at,

@@ -27,3 +27,19 @@ class FakeHttpClient(HttpClient):
             raise AssertionError(
                 f"No fake response configured for URL: {url}"
             ) from exc
+
+    async def post_json(
+        self,
+        url: str,
+        *,
+        json: dict,
+        headers: dict | None = None,
+    ) -> object:
+
+        try:
+            return self._responses[url]
+
+        except KeyError as exc:
+            raise AssertionError(
+                f"No fake response configured for URL: {url}"
+            ) from exc

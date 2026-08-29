@@ -68,7 +68,6 @@ class SqlAlchemyCompanyRepository(CompanyRepository):
             selectinload(CompanyORM.scalar_provenance_rows),
             selectinload(CompanyORM.set_provenance_rows),
         )
-
     # ------------------------------------------------------------------
     # Write operations
     # ------------------------------------------------------------------
@@ -227,7 +226,6 @@ class SqlAlchemyCompanyRepository(CompanyRepository):
         await self._session.execute(
             stmt,
         )
-
     # ------------------------------------------------------------------
     # Identity resolution
     # ------------------------------------------------------------------
@@ -308,7 +306,6 @@ class SqlAlchemyCompanyRepository(CompanyRepository):
         return CompanyMapper.to_domain(
             orm,
         )
-
     async def find_by_phone(
         self,
         phone: str,

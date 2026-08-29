@@ -49,15 +49,12 @@ from acios_discovery.infrastructure.persistence.database import (
     SessionFactory,
 )
 from acios_discovery.infrastructure.persistence.session_scoped_crawl_persistence import (
+    SessionScopedCrawlJobPersistence,
     SessionScopedCrawlSessionPersistence,
 )
 from acios_discovery.infrastructure.queue.in_memory_job_queue import (
     InMemoryJobQueue,
 )
-from acios_discovery.infrastructure.persistence.session_scoped_crawl_persistence import (
-    SessionScopedCrawlJobPersistence,
-)
-
 
 
 class CrawlingServices:

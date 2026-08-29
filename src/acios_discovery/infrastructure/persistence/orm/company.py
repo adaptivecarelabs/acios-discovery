@@ -63,6 +63,32 @@ class CompanyORM(Base):
         DateTime(timezone=True),
     )
 
+    rc_number: Mapped[str | None] = mapped_column(
+        String(64),
+    )
+
+    entity_type: Mapped[str | None] = mapped_column(
+        String(32),
+    )
+
+    registration_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+    )
+
+    registration_status: Mapped[str | None] = mapped_column(
+        String(16),
+    )
+
+    nature_of_business: Mapped[str | None] = mapped_column(
+        String(255),
+    )
+
+    cac_verifications = relationship(
+        "CacVerificationORM",
+        back_populates="company",
+        cascade="all, delete-orphan",
+    )
+
     discoveries = relationship(
         "DiscoveryORM",
         back_populates="company",

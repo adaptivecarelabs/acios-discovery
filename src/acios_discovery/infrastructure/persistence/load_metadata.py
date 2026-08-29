@@ -21,6 +21,7 @@ from acios_discovery.infrastructure.persistence.orm import (
     SocialLinkORM,
     SourceORM,
     StateORM,
+    UserORM,
     WebsiteORM,
 )
 
@@ -40,5 +41,6 @@ __all__ = [
     "SocialLinkORM",
     "SourceORM",
     "StateORM",
+    "UserORM",
     "WebsiteORM",
 ]

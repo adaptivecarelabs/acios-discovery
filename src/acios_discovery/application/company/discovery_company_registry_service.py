@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from uuid import uuid4
-from acios_discovery.application.resolution.resolution_lock_keys import (
-    build_resolution_lock_keys,
-)
+
 from acios_discovery.application.company.company_factory import CompanyFactory
 from acios_discovery.application.company.company_merge_service import (
     CompanyMergeService,
@@ -19,6 +17,9 @@ from acios_discovery.application.metrics.crawl_metrics_service import (
 from acios_discovery.application.persistence.unit_of_work import UnitOfWork
 from acios_discovery.application.resolution.entity_resolution_service import (
     EntityResolutionService,
+)
+from acios_discovery.application.resolution.resolution_lock_keys import (
+    build_resolution_lock_keys,
 )
 from acios_discovery.domain.company.company import Company
 from acios_discovery.domain.discovery.record import DiscoveryRecord

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
 from acios_discovery.application.metrics.crawl_metrics_service import (
     CrawlMetricsService,
 )
@@ -78,7 +81,70 @@ class ProxyRotatingHttpClient(HttpClient):
                 )
 
                 continue
+            except FatalCrawlError:
 
+                self._pool.report_failure(
+                    state,
+                    retryable=False,
+                )
+
+                raise
+
+            else:
+
+                self._pool.report_success(state)
+
+                return result
+
+        assert last_exc is not None
+
+        raise last_exc
+
+    async def post_json(
+        self,
+        url: str,
+        *,
+        json: Mapping[str, Any],
+        headers: Mapping[str, str] | None = None,
+    ) -> Any:
+
+        last_exc: Exception | None = None
+
+        for attempt in range(1, self._max_attempts + 1):
+
+            state = await self._pool.acquire()
+
+            try:
+                result = await self._inner.post_json(
+                    url,
+                    json=json,
+                    headers=headers,
+                    proxy=state.proxy,
+                )
+
+            except RetryableCrawlError as exc:
+
+                self._pool.report_failure(
+                    state,
+                    retryable=True,
+                )
+
+                if self._metrics is not None:
+                    self._metrics.record_proxy_retry()
+
+                last_exc = exc
+
+                logger.warning(
+                    "Retryable failure via proxy %s "
+                    "(attempt %d/%d) posting to %s: %s",
+                    state.proxy,
+                    attempt,
+                    self._max_attempts,
+                    url,
+                    exc,
+                )
+
+                continue
             except FatalCrawlError:
 
                 self._pool.report_failure(

@@ -15,6 +15,14 @@ class CrawlSession(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid4()))
 
+    state: str | None = None
+
+    categories: list[str] | None = None
+
+    max_jobs: int | None = None
+
+    triggered_by_user_id: str | None = None
+
     status: CrawlSessionStatus = CrawlSessionStatus.PENDING
 
     started_at: datetime | None = None

@@ -11,11 +11,11 @@ from acios_discovery.domain.company.company import Company
 from acios_discovery.domain.company.company_id import CompanyId
 from acios_discovery.domain.discovery.models import RawDiscovery
 from acios_discovery.domain.sources import Source
-from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
-    InMemoryCompanyRepository,
-)
 from acios_discovery.infrastructure.repositories.in_memory_company_match_repository import (
     InMemoryCompanyMatchRepository,
+)
+from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
+    InMemoryCompanyRepository,
 )
 
 

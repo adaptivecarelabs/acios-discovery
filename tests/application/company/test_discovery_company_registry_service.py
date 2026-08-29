@@ -37,14 +37,12 @@ from acios_discovery.domain.sources import Source
 from acios_discovery.infrastructure.persistence.in_memory_discovery_repository import (
     InMemoryDiscoveryRepository,
 )
-from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
-    InMemoryCompanyRepository,
-)
 from acios_discovery.infrastructure.repositories.in_memory_company_match_repository import (
     InMemoryCompanyMatchRepository,
 )
-
-
+from acios_discovery.infrastructure.repositories.in_memory_company_repository import (
+    InMemoryCompanyRepository,
+)
 
 
 def make_context() -> DiscoveryContext:

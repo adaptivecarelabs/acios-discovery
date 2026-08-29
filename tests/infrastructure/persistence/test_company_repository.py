@@ -433,3 +433,99 @@ async def test_find_by_website_is_normalized(
     assert loaded.id == company.id
 
 
+
+async def test_cac_fields_are_persisted_and_reloaded(
+    db_session: AsyncSession,
+) -> None:
+    repository = SqlAlchemyCompanyRepository(
+        db_session,
+    )
+
+    from datetime import UTC, datetime
+
+    from acios_discovery.domain.cac import (
+        CacEntityType,
+        CacRegistrationStatus,
+    )
+
+    company = make_company()
+
+    company.rc_number = "RC123456"
+    company.entity_type = CacEntityType.COMPANY
+    company.registration_date = datetime(2020, 1, 1, tzinfo=UTC)
+    company.registration_status = CacRegistrationStatus.ACTIVE
+    company.nature_of_business = "Pharmaceutical distribution"
+
+    await repository.add(company)
+
+    await db_session.commit()
+
+    loaded = await repository.get(company.id)
+
+    assert loaded is not None
+    assert loaded.rc_number == "RC123456"
+    assert loaded.entity_type == CacEntityType.COMPANY
+    assert loaded.registration_date == datetime(
+        2020, 1, 1, tzinfo=UTC,
+    )
+    assert loaded.registration_status == CacRegistrationStatus.ACTIVE
+    assert loaded.nature_of_business == "Pharmaceutical distribution"
+
+
+async def test_cac_fields_default_to_none(
+    db_session: AsyncSession,
+) -> None:
+    repository = SqlAlchemyCompanyRepository(
+        db_session,
+    )
+
+    company = make_company()
+
+    await repository.add(company)
+
+    await db_session.commit()
+
+    loaded = await repository.get(company.id)
+
+    assert loaded is not None
+    assert loaded.rc_number is None
+    assert loaded.entity_type is None
+    assert loaded.registration_date is None
+    assert loaded.registration_status is None
+    assert loaded.nature_of_business is None
+
+
+async def test_cac_fields_are_updated_via_update_orm(
+    db_session: AsyncSession,
+) -> None:
+    from acios_discovery.domain.cac import (
+        CacEntityType,
+        CacRegistrationStatus,
+    )
+
+    repository = SqlAlchemyCompanyRepository(
+        db_session,
+    )
+
+    company = make_company()
+
+    await repository.add(company)
+
+    await db_session.commit()
+
+    company.rc_number = "RC999999"
+    company.entity_type = CacEntityType.BUSINESS_NAME
+    company.registration_status = CacRegistrationStatus.INACTIVE
+
+    await repository.update(company)
+
+    await db_session.commit()
+
+    loaded = await repository.get(company.id)
+
+    assert loaded is not None
+    assert loaded.rc_number == "RC999999"
+    assert loaded.entity_type == CacEntityType.BUSINESS_NAME
+    assert loaded.registration_status == (
+        CacRegistrationStatus.INACTIVE
+    )

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from acios_discovery.application.persistence.unit_of_work import (
     UnitOfWork,
 )

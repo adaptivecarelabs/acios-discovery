@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
 from acios_discovery.application.metrics.crawl_metrics_service import (
     CrawlMetricsService,
 )
@@ -35,6 +38,31 @@ class MetricsRecordingHttpClient(HttpClient):
 
         try:
             result = await self._client.get(url)
+
+        except Exception:
+            self._metrics.record_http_failure()
+            raise
+
+        self._metrics.record_success()
+
+        return result
+
+    async def post_json(
+        self,
+        url: str,
+        *,
+        json: Mapping[str, Any],
+        headers: Mapping[str, str] | None = None,
+    ) -> Any:
+
+        self._metrics.record_request()
+
+        try:
+            result = await self._client.post_json(
+                url,
+                json=json,
+                headers=headers,
+            )
 
         except Exception:
             self._metrics.record_http_failure()

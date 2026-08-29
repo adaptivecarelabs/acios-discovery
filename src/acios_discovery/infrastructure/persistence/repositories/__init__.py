@@ -13,6 +13,9 @@ from .crawl_session_repository import (
 from .discovery_repository import (
     SqlAlchemyDiscoveryRepository,
 )
+from .user_repository import (
+    SqlAlchemyUserRepository,
+)
 
 __all__ = [
     "PersistenceRepositories",
@@ -20,4 +23,5 @@ __all__ = [
     "SqlAlchemyDiscoveryRepository",
     "SqlAlchemyCrawlSessionRepository",
     "SqlAlchemyCrawlJobRepository",
+    "SqlAlchemyUserRepository",
 ]

@@ -1,11 +1,12 @@
 from __future__ import annotations
-from acios_discovery.shared.logging import logger
+
 from acios_discovery.application.crawling.supervision.crawl_supervisor_result import (
     CrawlSupervisorResult,
 )
 from acios_discovery.application.persistence.crawl_session_persistence import (
     CrawlSessionPersistence,
 )
+from acios_discovery.shared.logging import logger
 
 
 class CrawlSupervisor:

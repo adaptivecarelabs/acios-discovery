@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .company_match_repository import (
+    SqlAlchemyCompanyMatchRepository,
+)
 from .company_repository import (
     SqlAlchemyCompanyRepository,
 )
@@ -17,8 +20,8 @@ from .discovery_repository import (
 from .outbox_repository import (
     SqlAlchemyOutboxRepository,
 )
-from .company_match_repository import (
-    SqlAlchemyCompanyMatchRepository,
+from .user_repository import (
+    SqlAlchemyUserRepository,
 )
 
 
@@ -67,6 +70,12 @@ class PersistenceRepositories:
 
         self.crawl_job = (
             SqlAlchemyCrawlJobRepository(
+                session,
+            )
+        )
+
+        self.user = (
+            SqlAlchemyUserRepository(
                 session,
             )
         )

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import DateTime, Integer, String
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from acios_discovery.infrastructure.persistence.metadata import Base
@@ -21,6 +22,26 @@ class CrawlSessionORM(Base):
     id: Mapped[str] = mapped_column(
         String(50),
         primary_key=True,
+    )
+
+    state: Mapped[str | None] = mapped_column(
+        String(120),
+        nullable=True,
+    )
+
+    categories: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String(255)),
+        nullable=True,
+    )
+
+    max_jobs: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    triggered_by_user_id: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
     )
 
     status: Mapped[str] = mapped_column(

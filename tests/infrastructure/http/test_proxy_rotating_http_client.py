@@ -216,3 +216,112 @@ async def test_works_without_metrics_service():
     result = await client.get("https://example.com")
 
     assert result == "ok"
+
+
+@pytest.mark.asyncio
+async def test_post_json_returns_result_on_first_attempt():
+    pool = make_pool(3)
+
+    inner = AsyncMock()
+    inner.post_json.return_value = {"data": []}
+
+    client = ProxyRotatingHttpClient(inner=inner, pool=pool)
+
+    result = await client.post_json(
+        "https://example.com/search",
+        json={"searchTerm": "acme"},
+    )
+
+    assert result == {"data": []}
+    assert inner.post_json.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_post_json_retries_via_different_proxy_on_retryable_error():
+    pool = make_pool(3)
+
+    attempted_proxies = []
+
+    async def fake_post_json(url, *, json, headers=None, proxy=None):
+        attempted_proxies.append(proxy)
+        if len(attempted_proxies) == 1:
+            raise RetryableCrawlError("simulated 429")
+        return {"data": []}
+
+    inner = AsyncMock()
+    inner.post_json.side_effect = fake_post_json
+
+    client = ProxyRotatingHttpClient(inner=inner, pool=pool)
+
+    result = await client.post_json(
+        "https://example.com/search",
+        json={"searchTerm": "acme"},
+    )
+
+    assert result == {"data": []}
+    assert inner.post_json.call_count == 2
+    assert attempted_proxies[0] != attempted_proxies[1]
+
+
+@pytest.mark.asyncio
+async def test_post_json_raises_fatal_error_immediately_without_retry():
+    pool = make_pool(3)
+
+    inner = AsyncMock()
+    inner.post_json.side_effect = FatalCrawlError("simulated 403")
+
+    client = ProxyRotatingHttpClient(inner=inner, pool=pool)
+
+    with pytest.raises(FatalCrawlError):
+        await client.post_json(
+            "https://example.com/search",
+            json={"searchTerm": "acme"},
+        )
+
+    assert inner.post_json.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_post_json_exhausting_all_attempts_raises_last_retryable_error():
+    pool = make_pool(2)
+
+    inner = AsyncMock()
+    inner.post_json.side_effect = RetryableCrawlError("always fails")
+
+    client = ProxyRotatingHttpClient(
+        inner=inner,
+        pool=pool,
+        max_attempts=2,
+    )
+
+    with pytest.raises(RetryableCrawlError):
+        await client.post_json(
+            "https://example.com/search",
+            json={"searchTerm": "acme"},
+        )
+
+    assert inner.post_json.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_post_json_forwards_json_and_headers_to_inner():
+    pool = make_pool(2)
+
+    inner = AsyncMock()
+    inner.post_json.return_value = {"data": []}
+
+    client = ProxyRotatingHttpClient(inner=inner, pool=pool)
+
+    await client.post_json(
+        "https://example.com/search",
+        json={"searchTerm": "acme"},
+        headers={"Origin": "https://icrp.cac.gov.ng"},
+    )
+
+    _, kwargs = inner.post_json.call_args
+
+    assert kwargs["json"] == {"searchTerm": "acme"}
+    assert kwargs["headers"] == {
+        "Origin": "https://icrp.cac.gov.ng",
+    }
+    assert "proxy" in kwargs

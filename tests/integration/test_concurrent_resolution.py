@@ -13,9 +13,6 @@ from acios_discovery.application.company.company_merge_service import (
 from acios_discovery.application.company.discovery_company_registry_service import (
     DiscoveryCompanyRegistryService,
 )
-from acios_discovery.infrastructure.persistence.repositories.sequence_company_id_allocator import (
-    SequenceCompanyIdAllocator,
-)
 from acios_discovery.application.resolution.entity_resolution_engine import (
     EntityResolutionEngine,
 )
@@ -32,6 +29,9 @@ from acios_discovery.infrastructure.persistence.repositories.company_match_repos
 )
 from acios_discovery.infrastructure.persistence.repositories.discovery_repository import (
     SqlAlchemyDiscoveryRepository,
+)
+from acios_discovery.infrastructure.persistence.repositories.sequence_company_id_allocator import (
+    SequenceCompanyIdAllocator,
 )
 from acios_discovery.infrastructure.persistence.unit_of_work import (
     SqlAlchemyUnitOfWork,

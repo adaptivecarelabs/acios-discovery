@@ -6,9 +6,12 @@ from acios_discovery.application.metrics.crawl_metrics_service import (
 from acios_discovery.application.subscribers.crawl_metrics_subscriber import (
     CrawlMetricsSubscriber,
 )
-from acios_discovery.domain.crawling import CrawlJob
 from acios_discovery.domain.company.company_id import CompanyId
 from acios_discovery.domain.company.merge_summary import MergeSummary
+from acios_discovery.domain.crawling import CrawlJob
+from acios_discovery.domain.discovery.context import DiscoveryContext
+from acios_discovery.domain.discovery.models import RawDiscovery
+from acios_discovery.domain.discovery.record import DiscoveryRecord
 from acios_discovery.domain.events.company_discovered_event import (
     CompanyDiscoveredEvent,
 )
@@ -23,9 +26,6 @@ from acios_discovery.domain.events.job_retried_event import JobRetriedEvent
 from acios_discovery.domain.events.page_crawled_event import (
     PageCrawledEvent,
 )
-from acios_discovery.domain.discovery.context import DiscoveryContext
-from acios_discovery.domain.discovery.models import RawDiscovery
-from acios_discovery.domain.discovery.record import DiscoveryRecord
 from acios_discovery.domain.sources import Source
 
 

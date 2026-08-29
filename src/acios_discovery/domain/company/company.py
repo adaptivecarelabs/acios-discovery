@@ -5,6 +5,12 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
+from acios_discovery.domain.cac import (
+    CacEntityType,
+    CacRegistrationStatus,
+    CacVerificationResult,
+    VerificationOutcome,
+)
 from acios_discovery.domain.company.company_id import CompanyId
 from acios_discovery.domain.company.field_provenance import FieldProvenance
 from acios_discovery.domain.company.merge_summary import MergeSummary
@@ -77,6 +83,20 @@ class Company:
     business_locations: int | None = None
 
     #
+    # CAC Verification
+    #
+
+    rc_number: str | None = None
+
+    entity_type: CacEntityType | None = None
+
+    registration_date: datetime | None = None
+
+    registration_status: CacRegistrationStatus | None = None
+
+    nature_of_business: str | None = None
+
+    #
     # Provenance
     #
     # set_provenance:    {field_name: {value: FieldProvenance}}
@@ -94,7 +114,6 @@ class Company:
     #
     # Metadata
     #
-
     first_seen: datetime = field(
         default_factory=lambda: datetime.now(UTC)
     )
@@ -133,6 +152,63 @@ class Company:
     def add_source(self, value: str | None) -> None:
         if value:
             self.sources.add(value)
+
+    #
+    # ---------- CAC verification ----------
+    #
+
+    def apply_cac_verification(
+        self,
+        result: CacVerificationResult,
+    ) -> None:
+        """
+        Applies a CAC verification result to this company.
+
+        Only VERIFIED outcomes carry a matched_entity and are
+        applied here — AMBIGUOUS and NOT_FOUND results are
+        recorded separately (see CacVerificationRepository) but
+        do not mutate the company's CAC fields, since nothing
+        was confidently selected.
+
+        CAC is treated as an authoritative source: a fresh
+        VERIFIED result always overwrites any previously stored
+        CAC fields, regardless of the prior confidence score.
+        This differs deliberately from _merge_scalar_field's
+        confidence-gated overwrite used for other scalar fields
+        merged from discovery sources.
+        """
+
+        if result.outcome != VerificationOutcome.VERIFIED:
+            return
+
+        matched = result.matched_entity
+
+        if matched is None:
+            return
+
+        provenance = FieldProvenance(
+            source="CAC",
+            detail_url=None,
+            confidence=result.confidence,
+            observed_at=result.verified_at,
+        )
+
+        self.rc_number = matched.rc_number
+        self.entity_type = matched.entity_type
+        self.registration_date = matched.registration_date
+        self.registration_status = matched.status
+        self.nature_of_business = matched.nature_of_business
+
+        for field_name in (
+            "rc_number",
+            "entity_type",
+            "registration_date",
+            "registration_status",
+            "nature_of_business",
+        ):
+            self.scalar_provenance[field_name] = provenance
+
+        self.touch()
 
     #
     # ---------- Merge internals ----------
@@ -251,7 +327,6 @@ class Company:
                 accepted=False,
                 reason=reason,
             )
-
     def merge_discovery(
         self,
         discovery: RawDiscovery,

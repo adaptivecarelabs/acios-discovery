@@ -41,6 +41,9 @@ from acios_discovery.application.discovery.pipeline import (
 from acios_discovery.application.enrichment.finelib_enricher import (
     FinelibEnricher,
 )
+from acios_discovery.application.metrics.crawl_metrics_service import (
+    CrawlMetricsService,
+)
 from acios_discovery.application.planning.builders.listing_url_builder import (
     ListingUrlBuilder,
 )
@@ -80,26 +83,23 @@ from acios_discovery.infrastructure.connectors.finelib.url_slug_mapper import (
 from acios_discovery.infrastructure.http.httpx_client import (
     HttpxClient,
 )
+from acios_discovery.infrastructure.http.metrics_recording_http_client import (
+    MetricsRecordingHttpClient,
+)
 from acios_discovery.infrastructure.persistence.database import (
     SessionFactory,
 )
 from acios_discovery.infrastructure.persistence.repositories.container import (
     PersistenceRepositories,
 )
-from acios_discovery.infrastructure.persistence.unit_of_work import (
-    SqlAlchemyUnitOfWork,
-)
 from acios_discovery.infrastructure.persistence.repositories.sequence_company_id_allocator import (
     SequenceCompanyIdAllocator,
 )
-from .crawling_services import CrawlingServices
-from acios_discovery.application.metrics.crawl_metrics_service import (
-    CrawlMetricsService,
-)
-from acios_discovery.infrastructure.http.metrics_recording_http_client import (
-    MetricsRecordingHttpClient,
+from acios_discovery.infrastructure.persistence.unit_of_work import (
+    SqlAlchemyUnitOfWork,
 )
 
+from .crawling_services import CrawlingServices
 
 
 class DiscoveryServices:

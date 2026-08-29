@@ -7,6 +7,7 @@ from acios_discovery.application.normalization.company_lookup import (
     normalize_company_phone,
     normalize_company_website,
 )
+from acios_discovery.domain.cac import CacEntityType, CacRegistrationStatus
 from acios_discovery.domain.company.company import Company
 from acios_discovery.domain.company.company_id import CompanyId
 from acios_discovery.domain.company.field_provenance import FieldProvenance
@@ -53,7 +54,20 @@ class CompanyMapper:
             last_seen=company.last_seen,
             canonical_name_normalized=normalize_company_name(
                 company.canonical_name
-            )
+            ),
+            rc_number=company.rc_number,
+            entity_type=(
+                company.entity_type.value
+                if company.entity_type is not None
+                else None
+            ),
+            registration_date=company.registration_date,
+            registration_status=(
+                company.registration_status.value
+                if company.registration_status is not None
+                else None
+            ),
+            nature_of_business=company.nature_of_business,
         )
 
         #
@@ -204,6 +218,19 @@ class CompanyMapper:
             business_locations=orm.business_locations,
             first_seen=orm.first_seen,
             last_seen=orm.last_seen,
+            rc_number=orm.rc_number,
+            entity_type=(
+                CacEntityType(orm.entity_type)
+                if orm.entity_type is not None
+                else None
+            ),
+            registration_date=orm.registration_date,
+            registration_status=(
+                CacRegistrationStatus(orm.registration_status)
+                if orm.registration_status is not None
+                else None
+            ),
+            nature_of_business=orm.nature_of_business,
         )
 
         #
@@ -491,6 +518,20 @@ class CompanyMapper:
         orm.business_locations = company.business_locations
         orm.last_seen = company.last_seen
 
+        orm.rc_number = company.rc_number
+        orm.entity_type = (
+            company.entity_type.value
+            if company.entity_type is not None
+            else None
+        )
+        orm.registration_date = company.registration_date
+        orm.registration_status = (
+            company.registration_status.value
+            if company.registration_status is not None
+            else None
+        )
+        orm.nature_of_business = company.nature_of_business
+
         #
         # Identity
         #
@@ -514,7 +555,6 @@ class CompanyMapper:
             WebsiteORM,
             normalize_company_website,
         )
-
         cls._sync_collection(
             orm.addresses,
             company.addresses,

@@ -17,7 +17,11 @@ from acios_discovery.application.discovery.listing_crawl_result import (
 from acios_discovery.application.events.in_memory_event_publisher import (
     InMemoryEventPublisher,
 )
+from acios_discovery.application.persistence.crawl_job_persistence import (
+    CrawlJobPersistence,
+)
 from acios_discovery.domain.crawling import CrawlJob
+from acios_discovery.domain.crawling.status import CrawlStatus
 from acios_discovery.domain.errors.crawl_errors import RetryableCrawlError
 from acios_discovery.domain.events.company_discovered_event import (
     CompanyDiscoveredEvent,
@@ -32,13 +36,6 @@ from acios_discovery.domain.events.page_crawled_event import (
 )
 from acios_discovery.domain.queue.job_queue import JobQueue
 from acios_discovery.shared.logging import logger
-from acios_discovery.application.persistence.crawl_job_persistence import (
-    CrawlJobPersistence,
-)
-from acios_discovery.domain.crawling.status import CrawlStatus
-
-
-
 
 
 class ConcurrentWorkerPool:

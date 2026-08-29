@@ -13,12 +13,18 @@ from acios_discovery.domain.crawling import CrawlJob
 from acios_discovery.domain.discovery.context import DiscoveryContext
 from acios_discovery.domain.discovery.models import RawDiscovery
 from acios_discovery.domain.discovery.record import DiscoveryRecord
+from acios_discovery.domain.errors.crawl_errors import (
+    FatalCrawlError,
+    RetryableCrawlError,
+)
 from acios_discovery.domain.events.company_discovered_event import (
     CompanyDiscoveredEvent,
 )
 from acios_discovery.domain.events.job_completed_event import (
     JobCompletedEvent,
 )
+from acios_discovery.domain.events.job_failed_event import JobFailedEvent
+from acios_discovery.domain.events.job_retried_event import JobRetriedEvent
 from acios_discovery.domain.events.page_crawled_event import (
     PageCrawledEvent,
 )
@@ -26,14 +32,6 @@ from acios_discovery.domain.sources import Source
 from acios_discovery.infrastructure.queue.in_memory_job_queue import (
     InMemoryJobQueue,
 )
-from acios_discovery.domain.errors.crawl_errors import (
-    FatalCrawlError,
-    RetryableCrawlError,
-)
-from acios_discovery.domain.events.job_failed_event import JobFailedEvent
-from acios_discovery.domain.events.job_retried_event import JobRetriedEvent
-
-
 
 
 def make_record(name: str) -> DiscoveryRecord:
